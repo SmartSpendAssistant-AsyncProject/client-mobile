@@ -16,19 +16,20 @@ import { useNavigation } from '@react-navigation/native';
 import { RootStackNavigationProp } from '../types/navigation';
 
 export default function RegisterScreen() {
-  // ALGORITHM: Navigation and State Management
-  // Line 1: Initialize navigation hook for screen transitions
+  //   Navigation and State Management
+  //     Initialize navigation hook for screen transitions
   const navigation = useNavigation<RootStackNavigationProp>();
 
 
-  // Line 2-5: State management for registration form inputs
+  //    State management for registration form inputs
+
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  // ALGORITHM: Form Submission Handler
-  // Line 6: Handle registration form submission and navigate to main tabs
+  //   Form Submission Handler
+  //    Handle registration form submission and navigate to main tabs
   const handleSubmit = () => {
     // TODO: Add registration validation and API call logic here
     if (password !== confirmPassword) {
@@ -39,8 +40,8 @@ export default function RegisterScreen() {
     navigation.navigate('MainTabs');
   };
 
-  // ALGORITHM: Navigation Handler
-  // Line 7: Navigate back to login screen
+  //   Navigation Handler
+  //   Navigate back to login screen
   const handleSignIn = () => {
 
     navigation.navigate('Login');
@@ -48,37 +49,38 @@ export default function RegisterScreen() {
 
   return (
 
-    // ALGORITHM: Main Container Setup
-    // Line 8: SafeAreaView ensures content stays within device safe boundaries
+    //   Main Container Setup
+    //    SafeAreaView ensures content stays within device safe boundaries
+
     <SafeAreaView style={styles.container}>
-      {/* Line 9: KeyboardAvoidingView prevents keyboard from covering inputs */}
+      {/*    KeyboardAvoidingView prevents keyboard from covering inputs */}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardContainer}>
-        {/* ALGORITHM: Logo Section - Fixed at Top */}
-        {/* Line 10-12: Brand identity display fixed at top with proper padding */}
+        {/*   Logo Section - Fixed at Top */}
+        {/*    Brand identity display fixed at top with proper padding */}
         <View style={styles.logoSection}>
           <Text style={styles.logoText}>SSA</Text>
           <Text style={styles.subtitleText}>Smart Spend Assistant</Text>
         </View>
 
-        {/* ALGORITHM: Spacer and Centered Register Form */}
-        {/* Line 13: Flex container to center the register form vertically */}
+        {/*   Spacer and Centered Register Form */}
+        {/*  Flex container to center the register form vertically */}
         <View style={styles.centerContainer}>
-          {/* Line 14: ScrollView to handle longer form content */}
+          {/*    ScrollView to handle longer form content */}
           <ScrollView
             contentContainerStyle={styles.scrollContainer}
             showsVerticalScrollIndicator={false}>
             <View style={styles.formWrapper}>
-              {/* ALGORITHM: Register Form Section */}
-              {/* Line 15: Form container with proper spacing */}
+              {/*   Register Form Section */}
+              {/*    Form container with proper spacing */}
               <View style={styles.formSection}>
-                {/* Line 16: Register title */}
+                {/*    Register title */}
                 <Text style={styles.registerTitle}>Sign Up</Text>
 
-                {/* Line 17: Input fields container */}
+                {/*    Input fields container */}
                 <View style={styles.inputContainer}>
-                  {/* Line 18-24: Full name input field with state binding */}
+                  {/*    Full name input field with state binding */}
                   <TextInput
                     style={styles.input}
                     placeholder="Full Name"
@@ -89,7 +91,7 @@ export default function RegisterScreen() {
                     autoCorrect={false}
                   />
 
-                  {/* Line 25-31: Email input field with state binding */}
+                  {/*    Email input field with state binding */}
                   <TextInput
                     style={styles.input}
                     placeholder="Email address"
@@ -101,7 +103,7 @@ export default function RegisterScreen() {
                     autoCorrect={false}
                   />
 
-                  {/* Line 32-38: Password input field with secure text entry */}
+                  {/*    Password input field with secure text entry */}
                   <TextInput
                     style={styles.input}
                     placeholder="Password"
@@ -113,7 +115,7 @@ export default function RegisterScreen() {
                     autoCorrect={false}
                   />
 
-                  {/* Line 39-45: Confirm password input field with secure text entry */}
+                  {/*    Confirm password input field with secure text entry */}
                   <TextInput
                     style={styles.input}
                     placeholder="Confirm Password"
@@ -126,7 +128,7 @@ export default function RegisterScreen() {
                   />
                 </View>
 
-                {/* Line 46-50: Submit button with press handler */}
+                {/*    Submit button with press handler */}
                 <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
                   <Text style={styles.submitButtonText}>Create Account</Text>
                 </TouchableOpacity>
@@ -135,8 +137,8 @@ export default function RegisterScreen() {
           </ScrollView>
         </View>
 
-        {/* ALGORITHM: Sign In Link Section - Fixed at Bottom */}
-        {/* Line 51-57: Login redirect fixed at bottom with proper padding */}
+        {/*   Sign In Link Section - Fixed at Bottom */}
+        {/*    Login redirect fixed at bottom with proper padding */}
         <View style={styles.signInSection}>
           <Text style={styles.signInText}>
             Already have an account?{' '}
@@ -151,8 +153,8 @@ export default function RegisterScreen() {
   );
 }
 
-// ALGORITHM: StyleSheet Definition
-// Line 58-150: Comprehensive styling with fixed positioning layout for registration
+//   StyleSheet Definition
+//    Comprehensive styling with fixed positioning layout for registration
 const styles = StyleSheet.create({
   // Main container with white background and full screen coverage
   container: {
@@ -243,7 +245,7 @@ const styles = StyleSheet.create({
   submitButton: {
     width: '100%',
     height: 48, // h-12 equivalent
-    backgroundColor: '#475569', // bg-slate-600 equivalent
+    backgroundColor: '#3b667c', // bg-slate-600 equivalent
     borderRadius: 12, // rounded-xl equivalent
     justifyContent: 'center',
     alignItems: 'center',
