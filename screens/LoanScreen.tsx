@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, Button, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { RootStackNavigationProp } from 'types/navigation';
-import CardDebtCredit from 'components/CardDebtCredit';
+// import CardDebtCredit from 'components/CardDebtCredit';
 
 export default function LoanScreen() {
   //! Sample data untuk debt guys
@@ -37,12 +37,11 @@ export default function LoanScreen() {
       <Text className="px-4 py-2 text-base font-semibold">All Loans</Text>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {loanData.map((loan, index) => (
+        {/* {loanData.map((loan, index) => (
           <CardDebtCredit key={index} {...loan} />
-        ))}
+        ))} */}
         <Button title="Back" onPress={() => navigation.goBack()} />
       </ScrollView>
     </View>
   );
 }
-
