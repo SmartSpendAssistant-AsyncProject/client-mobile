@@ -4,8 +4,10 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+
   StyleSheet,
   SafeAreaView,
+
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -17,6 +19,7 @@ export default function RegisterScreen() {
   // ALGORITHM: Navigation and State Management
   // Line 1: Initialize navigation hook for screen transitions
   const navigation = useNavigation<RootStackNavigationProp>();
+
 
   // Line 2-5: State management for registration form inputs
   const [fullName, setFullName] = useState('');
@@ -39,10 +42,12 @@ export default function RegisterScreen() {
   // ALGORITHM: Navigation Handler
   // Line 7: Navigate back to login screen
   const handleSignIn = () => {
+
     navigation.navigate('Login');
   };
 
   return (
+
     // ALGORITHM: Main Container Setup
     // Line 8: SafeAreaView ensures content stays within device safe boundaries
     <SafeAreaView style={styles.container}>
@@ -142,6 +147,7 @@ export default function RegisterScreen() {
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
+
   );
 }
 
