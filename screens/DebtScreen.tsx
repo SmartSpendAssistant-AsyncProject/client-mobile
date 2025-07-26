@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, Button, ScrollView } from 'react-native';
+import { View, Text, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { RootStackNavigationProp } from 'types/navigation';
 import CardDebtCredit from 'components/CardDebtCredit';
 
@@ -62,18 +63,29 @@ export default function DebtScreen() {
   const navigation = useNavigation<RootStackNavigationProp>();
 
   return (
-    <View className="flex-1 bg-white pt-4">
-      <Text className="text-center text-xl font-bold text-white bg-sky-800 py-4">
-        My Debts
-      </Text>
-      <Text className="text-base font-semibold px-4 py-2">All Debts</Text>
+    <SafeAreaView style={{ flex: 1 }}>
+      <View style={{ flex: 1 }}>
+        <Text
+          style={{
+            paddingHorizontal: 24,
+            marginBottom: 4,
+            fontSize: 24,
+            fontWeight: '800',
+          }}>
+          All Debts
+        </Text>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {debtData.map((debt, index) => (
-          <CardDebtCredit key={index} {...debt} />
-        ))}
-      <Button title="Back" onPress={() => navigation.goBack()} />
-      </ScrollView>
-    </View>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {debtData.map((debt, index) => (
+            <CardDebtCredit
+              key={index}
+              {...debt}
+              onPress={() => navigation.navigate('Repayment')}
+              buttonLabel="Repay now"
+            />
+          ))}
+        </ScrollView>
+      </View>
+    </SafeAreaView>
   );
 }
