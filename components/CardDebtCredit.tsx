@@ -1,41 +1,65 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { RootStackNavigationProp } from 'types/navigation';
 // import { format } from 'date-fns';
+
+/*
+  name: string;
+  description: string;
+  amount: number;
+  date: string;
+  remaining_amount: number;
+  onPress: () => void; => untuk button navigasi yang reusable/customize
+  buttonLabel?: string; => untuk label button yang bisa reusable/customize
+  */
 
 type CardDebtCreditProps = {
   title: string;
   description: string;
   amount: number;
   total: number;
+  onPress: () => void;
+  buttonLabel?: string;
   // dueDate: string;
 };
 
+//! sementara style masih inline, nanti bisa di refactor ke StyleSheet
 export default function CardDebtCredit({
   title,
   description,
   amount,
   total,
+  onPress,
+  buttonLabel,
   // dueDate,
 }: CardDebtCreditProps) {
-  const navigation = useNavigation<RootStackNavigationProp>();
-
   return (
-    <View className="mx-4 mb-4 rounded-xl bg-white p-4 shadow">
-
+    <View
+      style={{
+        marginHorizontal: 16,
+        marginBottom: 16,
+        borderRadius: 12,
+        backgroundColor: 'white',
+        padding: 16,
+        elevation: 2,
+      }}>
       {/* Card Header */}
-      <Text className="text-lg font-semibold">{title}</Text>
+      <Text style={{ fontSize: 18, fontWeight: '600' }}>{title}</Text>
 
       {/* Card Description */}
-      <Text className="text-sm text-gray-500">{description}</Text>
+      <Text style={{ fontSize: 14, color: 'gray' }}>{description}</Text>
 
       {/* Amount and Total */}
-      <View className="mt-2 flex-row items-center justify-between">
-        <Text className="text-base font-bold text-red-600">
+      <View
+        style={{
+          marginTop: 8,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}>
+        <Text style={{ fontSize: 16, fontWeight: 'bold', color: 'red' }}>
           Rp. {amount.toLocaleString('id-ID')}
         </Text>
-        <Text className="text-sm text-gray-500">of Rp. {total.toLocaleString('id-ID')}</Text>
+        <Text style={{ fontSize: 12, color: 'gray' }}>of Rp. {total.toLocaleString('id-ID')}</Text>
       </View>
 
       {/* Due Date */}
@@ -47,9 +71,11 @@ export default function CardDebtCredit({
 
       {/* Action Button */}
       <Pressable
-        onPress={() => navigation.navigate('Repayment')}
-        className="mt-3 rounded-md bg-sky-800 py-2">
-        <Text className="text-center font-semibold text-white">Make Payment</Text>
+        onPress={onPress} // yang akan digunakan untuk navigasi berbeda pada load/debt screens
+        style={{ marginTop: 12, borderRadius: 8, backgroundColor: '#3b667c', paddingVertical: 8 }}>
+        <Text style={{ textAlign: 'center', fontWeight: '600', color: 'white' }}>
+          {buttonLabel}
+        </Text>
       </Pressable>
     </View>
   );
