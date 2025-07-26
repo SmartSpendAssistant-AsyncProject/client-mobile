@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
 
   // ALGORITHM: Header section styles
   header: {
-    backgroundColor: '#475569', // Slate-600
+    backgroundColor: '#3b667c', // Slate-600
     paddingVertical: 16,
     paddingHorizontal: 16,
     alignItems: 'center',
@@ -381,7 +381,7 @@ const styles = StyleSheet.create({
     paddingTop: 16,
   },
   addButton: {
-    backgroundColor: '#475569', // Slate-600
+    backgroundColor: '#3b667c', // Slate-600
     borderRadius: 12,
     paddingVertical: 12,
     alignItems: 'center',
