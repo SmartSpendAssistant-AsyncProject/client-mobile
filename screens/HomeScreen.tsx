@@ -11,7 +11,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { RootStackNavigationProp } from '../types/navigation';
 
-// ALGORITHM: Transaction interface for type safety
+//   Transaction interface for type safety
 interface Transaction {
   id: number;
   category: string;
@@ -22,17 +22,17 @@ interface Transaction {
 }
 
 export default function HomeScreen() {
-  // ALGORITHM: Navigation hook for screen transitions
+  //   Navigation hook for screen transitions
   const navigation = useNavigation<RootStackNavigationProp>();
 
-  // ALGORITHM: State management for wallet data and transactions
+  //   State management for wallet data and transactions
   const [walletBalance] = useState('Rp. 1.000.000,00');
   const [debt] = useState('Rp. 10.000');
   const [loan] = useState('Rp. 100.000');
   const [monthlyIncome] = useState('Rp. 100.000');
   const [monthlyExpense] = useState('Rp. 100.000');
 
-  // ALGORITHM: Transaction data array with sample data
+  //   Transaction data array with sample data
   const [transactions] = useState<Transaction[]>([
     {
       id: 1,
@@ -76,7 +76,7 @@ export default function HomeScreen() {
     },
   ]);
 
-  // ALGORITHM: Handle transaction item press with navigation placeholder
+  //   Handle transaction item press with navigation placeholder
   const handleTransactionPress = (transaction: Transaction) => {
     Alert.alert(
       'Transaction Details',
@@ -86,7 +86,7 @@ export default function HomeScreen() {
         {
           text: 'View Details',
           onPress: () => {
-            // ALGORITHM: Placeholder for future navigation to transaction details
+            //   Placeholder for future navigation to transaction details
             console.log('Navigate to transaction details for ID:', transaction.id);
             // TODO: Navigate to transaction details screen
             // navigation.navigate('TransactionDetails', { transactionId: transaction.id });
@@ -96,7 +96,7 @@ export default function HomeScreen() {
     );
   };
 
-  // ALGORITHM: Navigate to different wallet management screens
+  //   Navigate to different wallet management screens
   const navigateToWallets = () => navigation.navigate('Wallets');
   const navigateToDebt = () => navigation.navigate('Debt');
   const navigateToLoan = () => navigation.navigate('Loan');
@@ -104,9 +104,9 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-        {/* ALGORITHM: Main content container with padding */}
+        {/*   Main content container with padding */}
         <View style={styles.content}>
-          {/* ALGORITHM: Wallet balance card section - entire card is clickable */}
+          {/*   Wallet balance card section - entire card is clickable */}
           <TouchableOpacity
             style={styles.walletCard}
             onPress={navigateToWallets}
@@ -117,13 +117,13 @@ export default function HomeScreen() {
               <Text style={styles.balanceAmount}>{walletBalance}</Text>
             </View>
 
-            {/* ALGORITHM: Dollar sign icon positioned absolutely like the design */}
+            {/*   Dollar sign icon positioned absolutely like the design */}
             <View style={styles.dollarIconContainer}>
               <Text style={styles.dollarIcon}>$</Text>
             </View>
           </TouchableOpacity>
 
-          {/* ALGORITHM: Debt and loan cards grid */}
+          {/*   Debt and loan cards grid */}
           <View style={styles.cardGrid}>
             <TouchableOpacity style={styles.smallCard} onPress={navigateToDebt}>
               <Text style={styles.cardLabel}>Debt</Text>
@@ -135,10 +135,10 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* ALGORITHM: Monthly activities header */}
+          {/*   Monthly activities header */}
           <Text style={styles.sectionTitle}>Monthly Activities</Text>
 
-          {/* ALGORITHM: Income and expense cards grid */}
+          {/*   Income and expense cards grid */}
           <View style={styles.cardGrid}>
             <View style={[styles.smallCard, styles.incomeCard]}>
               <Text style={styles.cardLabel}>Income</Text>
@@ -150,11 +150,11 @@ export default function HomeScreen() {
             </View>
           </View>
 
-          {/* ALGORITHM: Transaction list section */}
+          {/*   Transaction list section */}
           <Text style={styles.sectionTitle}>Recent Transactions</Text>
           <View style={styles.transactionList}>
             {transactions.map((transaction) => {
-              // ALGORITHM: Individual transaction card with press handler
+              //   Individual transaction card with press handler
               return (
                 <TouchableOpacity
                   key={transaction.id}
@@ -189,7 +189,7 @@ export default function HomeScreen() {
   );
 }
 
-// ALGORITHM: StyleSheet object for component styling
+//   StyleSheet object for component styling
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
     paddingBottom: 100, // Extra space for tab navigation
   },
 
-  // ALGORITHM: Wallet balance card styles
+  //   Wallet balance card styles
   walletCard: {
     backgroundColor: '#3b667c', // Slate-600
     borderRadius: 24,
@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 
-  // ALGORITHM: Card grid and small card styles
+  //   Card grid and small card styles
   cardGrid: {
     flexDirection: 'row',
     gap: 16,
@@ -290,7 +290,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
 
-  // ALGORITHM: Section title styles
+  //   Section title styles
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
 
-  // ALGORITHM: Transaction list styles
+  //   Transaction list styles
   transactionList: {
     gap: 12,
     marginBottom: 24,
