@@ -1,7 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, TouchableOpacity, Platform } from 'react-native';
-import { Home, TrendingUp, Plus, MessageCircle, User } from 'lucide-react-native';
+import { Home, ChartNoAxesCombined, Plus, Bot, User } from 'lucide-react-native';
 import HomeScreen from '../screens/HomeScreen';
 import ReportScreen from '../screens/ReportScreen';
 import CreateScreen from '../screens/CreateScreen';
@@ -14,9 +14,9 @@ const Tab = createBottomTabNavigator();
 //   Define navigation items configuration for consistent icon mapping
 const navigationItems = [
   { id: 'Home', icon: Home, label: 'Home', component: HomeScreen },
-  { id: 'Report', icon: TrendingUp, label: 'Analytics', component: ReportScreen },
+  { id: 'Report', icon: ChartNoAxesCombined, label: 'Analytics', component: ReportScreen },
   { id: 'Create', icon: Plus, label: 'Add', component: CreateScreen },
-  { id: 'Chat', icon: MessageCircle, label: 'Messages', component: ChatScreen },
+  { id: 'Chat', icon: Bot, label: 'Messages', component: ChatScreen },
   { id: 'Profile', icon: User, label: 'Profile', component: ProfileScreen },
 ];
 
