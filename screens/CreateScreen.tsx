@@ -13,7 +13,7 @@ import { useNavigation } from '@react-navigation/native';
 import { RootStackNavigationProp } from '../types/navigation';
 import { Calendar, ChevronDown } from 'lucide-react-native';
 
-// ALGORITHM: Interface for transaction form data
+//   Interface for transaction form data
 interface TransactionData {
   amount: string;
   description: string;
@@ -23,10 +23,10 @@ interface TransactionData {
 }
 
 export default function CreateScreen() {
-  // ALGORITHM: Navigation hook for screen transitions
+  //   Navigation hook for screen transitions
   const navigation = useNavigation<RootStackNavigationProp>();
 
-  // ALGORITHM: State management for form inputs
+  //   State management for form inputs
   const [formData, setFormData] = useState<TransactionData>({
     amount: '',
     description: '',
@@ -35,11 +35,11 @@ export default function CreateScreen() {
     date: '24/07/2025',
   });
 
-  // ALGORITHM: State for dropdown visibility
+  //   State for dropdown visibility
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [showWalletDropdown, setShowWalletDropdown] = useState(false);
 
-  // ALGORITHM: Category options array
+  //   Category options array
   const categories = [
     { label: 'Food & Dining', value: 'food' },
     { label: 'Transportation', value: 'transport' },
@@ -48,7 +48,7 @@ export default function CreateScreen() {
     { label: 'Bills & Utilities', value: 'bills' },
   ];
 
-  // ALGORITHM: Wallet options array
+  //   Wallet options array
   const wallets = [
     { label: 'Cash', value: 'cash' },
     { label: 'Bank Account', value: 'bank' },
@@ -56,7 +56,7 @@ export default function CreateScreen() {
     { label: 'Digital Wallet', value: 'digital' },
   ];
 
-  // ALGORITHM: Form input handler function
+  //   Form input handler function
   const handleInputChange = (field: keyof TransactionData, value: string) => {
     setFormData((prev) => ({
       ...prev,
@@ -64,19 +64,19 @@ export default function CreateScreen() {
     }));
   };
 
-  // ALGORITHM: Category selection handler
+  //   Category selection handler
   const handleCategorySelect = (category: { label: string; value: string }) => {
     handleInputChange('category', category.label);
     setShowCategoryDropdown(false);
   };
 
-  // ALGORITHM: Wallet selection handler
+  //   Wallet selection handler
   const handleWalletSelect = (wallet: { label: string; value: string }) => {
     handleInputChange('wallet', wallet.label);
     setShowWalletDropdown(false);
   };
 
-  // ALGORITHM: Form validation function
+  //   Form validation function
   const validateForm = (): boolean => {
     if (!formData.amount.trim()) {
       Alert.alert('Error', 'Please enter an amount');
@@ -97,23 +97,23 @@ export default function CreateScreen() {
     return true;
   };
 
-  // ALGORITHM: Add transaction handler with validation and navigation
+  //   Add transaction handler with validation and navigation
   const handleAddTransaction = () => {
     if (!validateForm()) return;
 
-    // ALGORITHM: Show success message and navigate back
+    //   Show success message and navigate back
     Alert.alert('Success', 'Transaction added successfully!', [
       {
         text: 'OK',
         onPress: () => {
-          // ALGORITHM: Navigate back to Home screen
+          //   Navigate back to Home screen
           navigation.navigate('Home');
         },
       },
     ]);
   };
 
-  // ALGORITHM: Custom dropdown component
+  //   Custom dropdown component
   const renderDropdown = (
     show: boolean,
     items: { label: string; value: string }[],
@@ -137,15 +137,15 @@ export default function CreateScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* ALGORITHM: Header section with title */}
+      {/*   Header section with title */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Add Transaction</Text>
       </View>
 
-      {/* ALGORITHM: Main form content with scroll */}
+      {/*   Main form content with scroll */}
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.formContainer}>
-          {/* ALGORITHM: Amount input field */}
+          {/*   Amount input field */}
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>Amount</Text>
             <View style={styles.amountInputContainer}>
@@ -161,7 +161,7 @@ export default function CreateScreen() {
             </View>
           </View>
 
-          {/* ALGORITHM: Description input field */}
+          {/*   Description input field */}
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>Description</Text>
             <TextInput
@@ -173,7 +173,7 @@ export default function CreateScreen() {
             />
           </View>
 
-          {/* ALGORITHM: Category selector field with dropdown */}
+          {/*   Category selector field with dropdown */}
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>Category</Text>
             <TouchableOpacity
@@ -195,11 +195,11 @@ export default function CreateScreen() {
                 style={[styles.chevronIcon, showCategoryDropdown && styles.chevronRotated]}
               />
             </TouchableOpacity>
-            {/* ALGORITHM: Category dropdown options */}
+            {/*   Category dropdown options */}
             {renderDropdown(showCategoryDropdown, categories, handleCategorySelect)}
           </View>
 
-          {/* ALGORITHM: Wallet selector field with dropdown */}
+          {/*   Wallet selector field with dropdown */}
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>Wallet</Text>
             <TouchableOpacity
@@ -221,11 +221,11 @@ export default function CreateScreen() {
                 style={[styles.chevronIcon, showWalletDropdown && styles.chevronRotated]}
               />
             </TouchableOpacity>
-            {/* ALGORITHM: Wallet dropdown options */}
+            {/*   Wallet dropdown options */}
             {renderDropdown(showWalletDropdown, wallets, handleWalletSelect)}
           </View>
 
-          {/* ALGORITHM: Date input field with calendar icon */}
+          {/*   Date input field with calendar icon */}
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>Date</Text>
             <View style={styles.dateInputContainer}>
@@ -240,7 +240,7 @@ export default function CreateScreen() {
             </View>
           </View>
 
-          {/* ALGORITHM: Add transaction submit button */}
+          {/*   Add transaction submit button */}
           <View style={styles.buttonContainer}>
             <TouchableOpacity style={styles.addButton} onPress={handleAddTransaction}>
               <Text style={styles.addButtonText}>Add Transaction</Text>
@@ -252,14 +252,14 @@ export default function CreateScreen() {
   );
 }
 
-// ALGORITHM: StyleSheet object for component styling
+//   StyleSheet object for component styling
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
 
-  // ALGORITHM: Header section styles
+  //   Header section styles
   header: {
     backgroundColor: '#3b667c', // Slate-600
     paddingVertical: 16,
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
 
-  // ALGORITHM: Content and form styles
+  //   Content and form styles
   content: {
     flex: 1,
     backgroundColor: '#F9FAFB', // Light gray background
@@ -290,7 +290,7 @@ const styles = StyleSheet.create({
     color: '#374151',
   },
 
-  // ALGORITHM: Amount input styles
+  //   Amount input styles
   amountInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -312,7 +312,7 @@ const styles = StyleSheet.create({
     color: '#6B7280',
   },
 
-  // ALGORITHM: Regular text input styles
+  //   Regular text input styles
   textInput: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
@@ -325,7 +325,7 @@ const styles = StyleSheet.create({
     color: '#1F2937',
   },
 
-  // ALGORITHM: Select input styles
+  //   Select input styles
   selectInput: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
@@ -348,7 +348,7 @@ const styles = StyleSheet.create({
     color: '#D1D5DB',
   },
 
-  // ALGORITHM: Chevron icon styles
+  //   Chevron icon styles
   chevronIcon: {
     // No transition needed - React Native handles transforms differently
   },
@@ -356,7 +356,7 @@ const styles = StyleSheet.create({
     transform: [{ rotate: '180deg' }],
   },
 
-  // ALGORITHM: Date input styles
+  //   Date input styles
   dateInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -376,7 +376,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
 
-  // ALGORITHM: Submit button styles
+  //   Submit button styles
   buttonContainer: {
     paddingTop: 16,
   },
@@ -393,7 +393,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 
-  // ALGORITHM: Dropdown styles
+  //   Dropdown styles
   dropdownContainer: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
