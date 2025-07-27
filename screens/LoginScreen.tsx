@@ -13,56 +13,62 @@ import { useNavigation } from '@react-navigation/native';
 import { RootStackNavigationProp } from '../types/navigation';
 
 export default function LoginScreen() {
-  // ALGORITHM: Navigation and State Management
-  // Line 1: Initialize navigation hook for screen transitions
+
+  //   Navigation and State Management
+  //     Initialize navigation hook for screen transitions
   const navigation = useNavigation<RootStackNavigationProp>();
 
-  // Line 2-3: State management for form inputs
-  const [email, setEmail] = useState('test@mail.com');
-  const [password, setPassword] = useState('password123');
+  //     State management for form inputs
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-  // ALGORITHM: Form Submission Handler
-  // Line 4: Handle login form submission and navigate to main tabs
+  //   Form Submission Handler
+  //    Handle login form submission and navigate to main tabs
+
   const handleSubmit = () => {
     // TODO: Add authentication logic here
     console.log('Login attempt with:', { email, password });
     navigation.navigate('MainTabs');
   };
 
-  // ALGORITHM: Navigation Handler
-  // Line 5: Navigate to registration screen
+
+  //  Navigation Handler
+  //  Navigate to registration screen
   const handleSignUp = () => {
     navigation.navigate('Register');
   };
 
   return (
-    // ALGORITHM: Main Container Setup
-    // Line 6: SafeAreaView ensures content stays within device safe boundaries
+
+    //   Main Container Setup
+    //    SafeAreaView ensures content stays within device safe boundaries
     <SafeAreaView style={styles.container}>
-      {/* Line 7: KeyboardAvoidingView prevents keyboard from covering inputs */}
+      {/*    KeyboardAvoidingView prevents keyboard from covering inputs */}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardContainer}>
-        {/* ALGORITHM: Logo Section - Fixed at Top */}
-        {/* Line 8-10: Brand identity display fixed at top with proper padding */}
+        {/*   Logo Section - Fixed at Top */}
+        {/*    Brand identity display fixed at top with proper padding */}
+
         <View style={styles.logoSection}>
           <Text style={styles.logoText}>SSA</Text>
           <Text style={styles.subtitleText}>Smart Spend Assistant</Text>
         </View>
 
-        {/* ALGORITHM: Spacer and Centered Login Form */}
-        {/* Line 11: Flex container to center the login form vertically */}
+        {/*   Spacer and Centered Login Form */}
+        {/*    Flex container to center the login form vertically */}
         <View style={styles.centerContainer}>
           <View style={styles.formWrapper}>
-            {/* ALGORITHM: Login Form Section */}
-            {/* Line 12: Form container with proper spacing */}
+            {/*   Login Form Section */}
+            {/*    Form container with proper spacing */}
             <View style={styles.formSection}>
-              {/* Line 13: Login title */}
+              {/*    Login title */}
               <Text style={styles.loginTitle}>Login</Text>
 
-              {/* Line 14: Input fields container */}
+              {/*    Input fields container */}
               <View style={styles.inputContainer}>
-                {/* Line 15-21: Email input field with state binding */}
+                {/*    Email input field with state binding */}
+
                 <TextInput
                   style={styles.input}
                   placeholder="Email address"
@@ -74,7 +80,9 @@ export default function LoginScreen() {
                   autoCorrect={false}
                 />
 
-                {/* Line 22-28: Password input field with secure text entry */}
+
+                {/*    Password input field with secure text entry */}
+
                 <TextInput
                   style={styles.input}
                   placeholder="Passwords"
@@ -87,7 +95,9 @@ export default function LoginScreen() {
                 />
               </View>
 
-              {/* Line 29-33: Submit button with press handler */}
+
+              {/*    Submit button with press handler */}
+
               <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
                 <Text style={styles.submitButtonText}>Submit</Text>
               </TouchableOpacity>
@@ -95,8 +105,10 @@ export default function LoginScreen() {
           </View>
         </View>
 
-        {/* ALGORITHM: Sign Up Link Section - Fixed at Bottom */}
-        {/* Line 34-40: Registration redirect fixed at bottom with proper padding */}
+
+        {/*   Sign Up Link Section - Fixed at Bottom */}
+        {/*    Registration redirect fixed at bottom with proper padding */}
+
         <View style={styles.signUpSection}>
           <Text style={styles.signUpText}>
             Dont have an account?{' '}
@@ -110,8 +122,10 @@ export default function LoginScreen() {
   );
 }
 
-// ALGORITHM: StyleSheet Definition
-// Line 41-120: Comprehensive styling with fixed positioning layout
+
+//   StyleSheet Definition
+//    Comprehensive styling with fixed positioning layout
+
 const styles = StyleSheet.create({
   // Main container with white background and full screen coverage
   container: {
@@ -197,7 +211,9 @@ const styles = StyleSheet.create({
   submitButton: {
     width: '100%',
     height: 48, // h-12 equivalent
-    backgroundColor: '#475569', // bg-slate-600 equivalent
+
+    backgroundColor: '#3b667c', // bg-slate-600 equivalent
+
     borderRadius: 12, // rounded-xl equivalent
     justifyContent: 'center',
     alignItems: 'center',
