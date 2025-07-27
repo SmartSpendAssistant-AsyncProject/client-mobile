@@ -1,8 +1,10 @@
 import React from 'react';
+
 import { View, Text, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { RootStackNavigationProp } from 'types/navigation';
+
 import CardDebtCredit from 'components/CardDebtCredit';
 
 export default function LoanScreen() {
@@ -14,12 +16,21 @@ export default function LoanScreen() {
   date: string;
   remaining_amount: number;
   */
+
   const loanData = [
     {
       title: 'KPR - BTN',
       description: 'House mortgage loan',
       amount: 30000000,
       total: 50000000,
+
+    },
+    {
+      title: 'Car Loan - BRI',
+      description: 'Vehicle financing',
+      amount: 12000000,
+      total: 15000000,
+
     },
     {
       title: 'Car Loan - BRI',
@@ -44,12 +55,7 @@ export default function LoanScreen() {
       description: 'Vehicle financing',
       amount: 12000000,
       total: 15000000,
-    },
-    {
-      title: 'Car Loan - BRI',
-      description: 'Vehicle financing',
-      amount: 12000000,
-      total: 15000000,
+
     },
   ];
 
@@ -80,5 +86,6 @@ export default function LoanScreen() {
         </ScrollView>
       </View>
     </SafeAreaView>
+
   );
 }

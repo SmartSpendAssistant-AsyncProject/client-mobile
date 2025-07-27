@@ -13,6 +13,7 @@ import { useNavigation } from '@react-navigation/native';
 import { RootStackNavigationProp } from '../types/navigation';
 
 export default function LoginScreen() {
+
   //   Navigation and State Management
   //     Initialize navigation hook for screen transitions
   const navigation = useNavigation<RootStackNavigationProp>();
@@ -23,11 +24,13 @@ export default function LoginScreen() {
 
   //   Form Submission Handler
   //    Handle login form submission and navigate to main tabs
+
   const handleSubmit = () => {
     // TODO: Add authentication logic here
     console.log('Login attempt with:', { email, password });
     navigation.navigate('MainTabs');
   };
+
 
   //  Navigation Handler
   //  Navigate to registration screen
@@ -36,6 +39,7 @@ export default function LoginScreen() {
   };
 
   return (
+
     //   Main Container Setup
     //    SafeAreaView ensures content stays within device safe boundaries
     <SafeAreaView style={styles.container}>
@@ -45,6 +49,7 @@ export default function LoginScreen() {
         style={styles.keyboardContainer}>
         {/*   Logo Section - Fixed at Top */}
         {/*    Brand identity display fixed at top with proper padding */}
+
         <View style={styles.logoSection}>
           <Text style={styles.logoText}>SSA</Text>
           <Text style={styles.subtitleText}>Smart Spend Assistant</Text>
@@ -63,6 +68,7 @@ export default function LoginScreen() {
               {/*    Input fields container */}
               <View style={styles.inputContainer}>
                 {/*    Email input field with state binding */}
+
                 <TextInput
                   style={styles.input}
                   placeholder="Email address"
@@ -74,7 +80,9 @@ export default function LoginScreen() {
                   autoCorrect={false}
                 />
 
+
                 {/*    Password input field with secure text entry */}
+
                 <TextInput
                   style={styles.input}
                   placeholder="Passwords"
@@ -87,7 +95,9 @@ export default function LoginScreen() {
                 />
               </View>
 
+
               {/*    Submit button with press handler */}
+
               <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
                 <Text style={styles.submitButtonText}>Submit</Text>
               </TouchableOpacity>
@@ -95,8 +105,10 @@ export default function LoginScreen() {
           </View>
         </View>
 
+
         {/*   Sign Up Link Section - Fixed at Bottom */}
         {/*    Registration redirect fixed at bottom with proper padding */}
+
         <View style={styles.signUpSection}>
           <Text style={styles.signUpText}>
             Dont have an account?{' '}
@@ -110,8 +122,10 @@ export default function LoginScreen() {
   );
 }
 
+
 //   StyleSheet Definition
 //    Comprehensive styling with fixed positioning layout
+
 const styles = StyleSheet.create({
   // Main container with white background and full screen coverage
   container: {
@@ -197,7 +211,9 @@ const styles = StyleSheet.create({
   submitButton: {
     width: '100%',
     height: 48, // h-12 equivalent
+
     backgroundColor: '#3b667c', // bg-slate-600 equivalent
+
     borderRadius: 12, // rounded-xl equivalent
     justifyContent: 'center',
     alignItems: 'center',

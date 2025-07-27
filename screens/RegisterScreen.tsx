@@ -16,12 +16,14 @@ import { useNavigation } from '@react-navigation/native';
 import { RootStackNavigationProp } from '../types/navigation';
 
 export default function RegisterScreen() {
+
   //   Navigation and State Management
   //     Initialize navigation hook for screen transitions
   const navigation = useNavigation<RootStackNavigationProp>();
 
 
   //    State management for registration form inputs
+
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -30,6 +32,7 @@ export default function RegisterScreen() {
 
   //   Form Submission Handler
   //    Handle registration form submission and navigate to main tabs
+
   const handleSubmit = () => {
     // TODO: Add registration validation and API call logic here
     if (password !== confirmPassword) {
@@ -40,14 +43,17 @@ export default function RegisterScreen() {
     navigation.navigate('MainTabs');
   };
 
+
   //   Navigation Handler
   //   Navigate back to login screen
+
   const handleSignIn = () => {
 
     navigation.navigate('Login');
   };
 
   return (
+
 
     //   Main Container Setup
     //    SafeAreaView ensures content stays within device safe boundaries
@@ -59,19 +65,23 @@ export default function RegisterScreen() {
         style={styles.keyboardContainer}>
         {/*   Logo Section - Fixed at Top */}
         {/*    Brand identity display fixed at top with proper padding */}
+
         <View style={styles.logoSection}>
           <Text style={styles.logoText}>SSA</Text>
           <Text style={styles.subtitleText}>Smart Spend Assistant</Text>
         </View>
 
+
         {/*   Spacer and Centered Register Form */}
         {/*  Flex container to center the register form vertically */}
         <View style={styles.centerContainer}>
           {/*    ScrollView to handle longer form content */}
+
           <ScrollView
             contentContainerStyle={styles.scrollContainer}
             showsVerticalScrollIndicator={false}>
             <View style={styles.formWrapper}>
+
               {/*   Register Form Section */}
               {/*    Form container with proper spacing */}
               <View style={styles.formSection}>
@@ -81,6 +91,7 @@ export default function RegisterScreen() {
                 {/*    Input fields container */}
                 <View style={styles.inputContainer}>
                   {/*    Full name input field with state binding */}
+
                   <TextInput
                     style={styles.input}
                     placeholder="Full Name"
@@ -91,7 +102,9 @@ export default function RegisterScreen() {
                     autoCorrect={false}
                   />
 
+
                   {/*    Email input field with state binding */}
+
                   <TextInput
                     style={styles.input}
                     placeholder="Email address"
@@ -103,7 +116,9 @@ export default function RegisterScreen() {
                     autoCorrect={false}
                   />
 
+
                   {/*    Password input field with secure text entry */}
+
                   <TextInput
                     style={styles.input}
                     placeholder="Password"
@@ -115,7 +130,9 @@ export default function RegisterScreen() {
                     autoCorrect={false}
                   />
 
+
                   {/*    Confirm password input field with secure text entry */}
+
                   <TextInput
                     style={styles.input}
                     placeholder="Confirm Password"
@@ -129,6 +146,7 @@ export default function RegisterScreen() {
                 </View>
 
                 {/*    Submit button with press handler */}
+
                 <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
                   <Text style={styles.submitButtonText}>Create Account</Text>
                 </TouchableOpacity>
@@ -139,6 +157,7 @@ export default function RegisterScreen() {
 
         {/*   Sign In Link Section - Fixed at Bottom */}
         {/*    Login redirect fixed at bottom with proper padding */}
+
         <View style={styles.signInSection}>
           <Text style={styles.signInText}>
             Already have an account?{' '}
@@ -153,8 +172,10 @@ export default function RegisterScreen() {
   );
 }
 
+
 //   StyleSheet Definition
 //    Comprehensive styling with fixed positioning layout for registration
+
 const styles = StyleSheet.create({
   // Main container with white background and full screen coverage
   container: {
@@ -245,7 +266,9 @@ const styles = StyleSheet.create({
   submitButton: {
     width: '100%',
     height: 48, // h-12 equivalent
+
     backgroundColor: '#3b667c', // bg-slate-600 equivalent
+
     borderRadius: 12, // rounded-xl equivalent
     justifyContent: 'center',
     alignItems: 'center',
