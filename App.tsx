@@ -1,6 +1,9 @@
 import './global.css';
+import { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import * as SecureStore from 'expo-secure-store';
+import { AuthProvider, useAuth } from './utils/AuthContext';
 
 import LoginScreen from './screens/LoginScreen';
 import RegisterScreen from './screens/RegisterScreen';
@@ -21,10 +24,17 @@ import { RootStackParamList } from './types/navigation';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-export default function App() {
+function AppNavigator() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    // You can return a loading screen here if needed
+    return null;
+  }
+
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login">
+      <Stack.Navigator initialRouteName={isAuthenticated ? "MainTabs" : "Login"}>
         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
 
         <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
@@ -41,5 +51,13 @@ export default function App() {
         <Stack.Screen name="NotificationDetail" component={NotificationDetailScreen} />
       </Stack.Navigator>
     </NavigationContainer>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppNavigator />
+    </AuthProvider>
   );
 }
