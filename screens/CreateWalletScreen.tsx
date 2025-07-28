@@ -7,11 +7,10 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
-  Modal,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { RootStackNavigationProp } from 'types/navigation';
-import { ArrowLeft, ChevronDown } from 'lucide-react-native';
+import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react-native';
 
 // Interface for wallet type options
 interface WalletTypeOption {
@@ -28,7 +27,7 @@ export default function CreateWalletScreen() {
   const [walletType, setWalletType] = useState('Cash');
   const [initialBalance, setInitialBalance] = useState('0');
   const [description, setDescription] = useState('');
-  const [showTypeModal, setShowTypeModal] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   // Wallet type options
   const walletTypes: WalletTypeOption[] = [
@@ -66,7 +65,7 @@ export default function CreateWalletScreen() {
   // Handle wallet type selection
   const selectWalletType = (type: string): void => {
     setWalletType(type);
-    setShowTypeModal(false);
+    setIsDropdownOpen(false);
   };
 
   return (
@@ -97,17 +96,55 @@ export default function CreateWalletScreen() {
         {/* Wallet Type */}
         <View style={styles.formGroup}>
           <Text style={styles.label}>Wallet Type</Text>
-          <TouchableOpacity style={styles.typeSelector} onPress={() => setShowTypeModal(true)}>
-            <View style={styles.typeSelectorContent}>
-              <View>
-                <Text style={styles.typeTitle}>{walletType}</Text>
-                <Text style={styles.typeSubtitle}>
-                  {walletTypes.find((type) => type.value === walletType)?.subtitle}
-                </Text>
+          <View style={styles.dropdownContainer}>
+            <TouchableOpacity
+              style={styles.typeSelector}
+              onPress={() => setIsDropdownOpen(!isDropdownOpen)}>
+              <View style={styles.typeSelectorContent}>
+                <View>
+                  <Text style={styles.typeTitle}>{walletType}</Text>
+                  <Text style={styles.typeSubtitle}>
+                    {walletTypes.find((type) => type.value === walletType)?.subtitle}
+                  </Text>
+                </View>
+                {isDropdownOpen ? (
+                  <ChevronUp size={20} color="#666" />
+                ) : (
+                  <ChevronDown size={20} color="#666" />
+                )}
               </View>
-              <ChevronDown size={20} color="#666" />
-            </View>
-          </TouchableOpacity>
+            </TouchableOpacity>
+            
+            {/* Dropdown Options */}
+            {isDropdownOpen && (
+              <View style={styles.dropdownOptions}>
+                {walletTypes.map((type) => (
+                  <TouchableOpacity
+                    key={type.value}
+                    style={[
+                      styles.dropdownOption,
+                      walletType === type.value && styles.selectedDropdownOption
+                    ]}
+                    onPress={() => selectWalletType(type.value)}>
+                    <View>
+                      <Text style={[
+                        styles.dropdownOptionTitle,
+                        walletType === type.value && styles.selectedDropdownText
+                      ]}>
+                        {type.label}
+                      </Text>
+                      <Text style={[
+                        styles.dropdownOptionSubtitle,
+                        walletType === type.value && styles.selectedDropdownSubtext
+                      ]}>
+                        {type.subtitle}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </View>
         </View>
 
         {/* Initial Balance */}
@@ -148,45 +185,6 @@ export default function CreateWalletScreen() {
           <Text style={styles.createButtonText}>Create Wallet</Text>
         </TouchableOpacity>
       </View>
-
-      {/* Wallet Type Selection Modal */}
-      <Modal
-        visible={showTypeModal}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowTypeModal(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Select Wallet Type</Text>
-            {walletTypes.map((type) => (
-              <TouchableOpacity
-                key={type.value}
-                style={[styles.typeOption, walletType === type.value && styles.selectedTypeOption]}
-                onPress={() => selectWalletType(type.value)}>
-                <View>
-                  <Text
-                    style={[
-                      styles.typeOptionTitle,
-                      walletType === type.value && styles.selectedTypeText,
-                    ]}>
-                    {type.label}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.typeOptionSubtitle,
-                      walletType === type.value && styles.selectedTypeSubtext,
-                    ]}>
-                    {type.subtitle}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-            <TouchableOpacity style={styles.cancelButton} onPress={() => setShowTypeModal(false)}>
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
@@ -250,6 +248,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E0E0E0',
   },
+  dropdownContainer: {
+    position: 'relative',
+    zIndex: 1000,
+  },
   typeSelectorContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -264,6 +266,46 @@ const styles = StyleSheet.create({
   typeSubtitle: {
     fontSize: 14,
     color: '#666',
+  },
+  dropdownOptions: {
+    backgroundColor: 'white',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    marginTop: 4,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  dropdownOption: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  selectedDropdownOption: {
+    backgroundColor: '#E3F2FD',
+  },
+  dropdownOptionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 2,
+  },
+  selectedDropdownText: {
+    color: '#5A8A9B',
+  },
+  dropdownOptionSubtitle: {
+    fontSize: 14,
+    color: '#666',
+  },
+  selectedDropdownSubtext: {
+    color: '#5A8A9B',
   },
   balanceContainer: {
     backgroundColor: 'white',
@@ -306,66 +348,5 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: 'white',
-  },
-  // Modal styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 20,
-    width: '85%',
-    maxHeight: '80%',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  typeOption: {
-    backgroundColor: '#F8F8F8',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  selectedTypeOption: {
-    backgroundColor: '#E3F2FD',
-    borderColor: '#5A8A9B',
-  },
-  typeOptionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
-  },
-  selectedTypeText: {
-    color: '#5A8A9B',
-  },
-  typeOptionSubtitle: {
-    fontSize: 14,
-    color: '#666',
-  },
-  selectedTypeSubtext: {
-    color: '#5A8A9B',
-  },
-  cancelButton: {
-    backgroundColor: '#F5F5F5',
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    color: '#666',
-    fontWeight: '500',
   },
 });
