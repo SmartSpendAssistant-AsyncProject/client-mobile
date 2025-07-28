@@ -7,10 +7,20 @@ import {
   StyleSheet,
   SafeAreaView,
   Alert,
+  Pressable,
+  StatusBar,
 } from 'react-native';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { RootStackNavigationProp } from '../types/navigation';
 import * as Notifications from 'expo-notifications';
+import {
+  Bell,
+  Wallet,
+  CreditCard,
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+} from 'lucide-react-native';
 
 //   Transaction interface for type safety
 interface Transaction {
@@ -234,9 +244,71 @@ export default function HomeScreen() {
   const navigateToDebt = () => navigation.navigate('Debt');
   const navigateToLoan = () => navigation.navigate('Loan');
   const navigateToReport = () => navigation.navigate('Report');
+  const navigateToNotification = () => navigation.navigate('Notification');
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+      {/* Set status bar style */}
+      <StatusBar barStyle="light-content" backgroundColor="#3b667c" />
+
+      {/* Custom header component */}
+      <View
+        style={{
+          backgroundColor: '#3b667c',
+          paddingHorizontal: 16,
+          paddingVertical: 16,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 12,
+        }}>
+        {/* Wallet icon in header */}
+        <View
+          style={{
+            width: 40,
+            height: 40,
+            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+            borderRadius: 20,
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}>
+          <Wallet size={20} color="#FFFFFF" />
+        </View>
+
+        {/* Header title and subtitle */}
+        <View style={{ flex: 1 }}>
+          <Text
+            style={{
+              color: '#FFFFFF',
+              fontSize: 18,
+              fontWeight: '600',
+            }}>
+            Smart Spend Assistant
+          </Text>
+          <Text
+            style={{
+              color: 'rgba(255, 255, 255, 0.8)',
+              fontSize: 14,
+            }}>
+            Financial Dashboard
+          </Text>
+        </View>
+
+        {/* Notification button */}
+        <TouchableOpacity
+          onPress={navigateToNotification}
+          style={{
+            width: 40,
+            height: 40,
+            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+            borderRadius: 20,
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+          activeOpacity={0.7}>
+          <Bell size={20} color="#FFFFFF" />
+        </TouchableOpacity>
+      </View>
+
       <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         {/*   Main content container with padding */}
         <View style={styles.content}>
@@ -260,11 +332,17 @@ export default function HomeScreen() {
           {/*   Debt and loan cards grid */}
           <View style={styles.cardGrid}>
             <TouchableOpacity style={styles.smallCard} onPress={navigateToDebt}>
-              <Text style={styles.cardLabel}>Debt</Text>
+              <View style={styles.cardHeader}>
+                <CreditCard size={20} color="#FFFFFF" />
+                <Text style={styles.cardLabel}>Debt</Text>
+              </View>
               <Text style={styles.cardAmount}>Rp. {debt.toLocaleString('id-ID')}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.smallCard} onPress={navigateToLoan}>
-              <Text style={styles.cardLabel}>Loan</Text>
+              <View style={styles.cardHeader}>
+                <DollarSign size={20} color="#FFFFFF" />
+                <Text style={styles.cardLabel}>Loan</Text>
+              </View>
               <Text style={styles.cardAmount}>Rp. {loan.toLocaleString('id-ID')}</Text>
             </TouchableOpacity>
           </View>
@@ -275,11 +353,17 @@ export default function HomeScreen() {
           {/*   Income and expense cards grid */}
           <View style={styles.cardGrid}>
             <View style={[styles.smallCard, styles.incomeCard]}>
-              <Text style={styles.cardLabel}>Income</Text>
+              <View style={styles.cardHeader}>
+                <TrendingUp size={20} color="#FFFFFF" />
+                <Text style={styles.cardLabel}>Income</Text>
+              </View>
               <Text style={styles.cardAmount}>Rp. {monthlyIncome.toLocaleString('id-ID')}</Text>
             </View>
             <View style={[styles.smallCard, styles.expenseCard]}>
-              <Text style={styles.cardLabel}>Expense</Text>
+              <View style={styles.cardHeader}>
+                <TrendingDown size={20} color="#FFFFFF" />
+                <Text style={styles.cardLabel}>Expense</Text>
+              </View>
               <Text style={styles.cardAmount}>Rp. {monthlyExpense.toLocaleString('id-ID')}</Text>
             </View>
           </View>
@@ -332,10 +416,11 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB', // Light gray background
+    backgroundColor: '#FFFFFF', // White background to match ChatScreen
   },
   scrollContainer: {
     flex: 1,
+    backgroundColor: '#F9FAFB', // Light gray background for content area
   },
   content: {
     paddingHorizontal: 16,
@@ -387,6 +472,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  walletIconContainer: {
+    position: 'absolute',
+    right: 20,
+    bottom: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   dollarIcon: {
     fontSize: 100,
     color: '#FFFFFF',
@@ -411,6 +503,11 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
   incomeCard: {
     backgroundColor: '#10B981', // Green-500
   },
@@ -421,7 +518,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     color: '#FFFFFF',
-    marginBottom: 4,
+    marginLeft: 8,
   },
   cardAmount: {
     fontSize: 18,
