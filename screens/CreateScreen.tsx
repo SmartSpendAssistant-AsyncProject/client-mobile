@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -8,109 +8,176 @@ import {
   StyleSheet,
   SafeAreaView,
   Alert,
+  Platform,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { RootStackNavigationProp } from '../types/navigation';
 import { Calendar, ChevronDown } from 'lucide-react-native';
+import * as SecureStore from 'expo-secure-store';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 //   Interface for transaction form data
-interface TransactionData {
-  amount: string;
+export interface IFormTransaction {
+  name: string;
   description: string;
-  category: string;
-  wallet: string;
+  ammount: number;
   date: string;
+  category_id: string;
+  wallet_id: string;
 }
 
+const BASE_URL = process.env.BASE_URL || 'https://ssa-server-omega.vercel.app';
+
 export default function CreateScreen() {
-  //   Navigation hook for screen transitions
   const navigation = useNavigation<RootStackNavigationProp>();
+  const [token, setToken] = useState<string>('');
+  const [name, setName] = useState<string>('');
+  const [description, setDescription] = useState<string>('');
+  const [ammount, setAmmount] = useState<number>(0);
 
-  //   State management for form inputs
-  const [formData, setFormData] = useState<TransactionData>({
-    amount: '',
-    description: '',
-    category: '',
-    wallet: '',
-    date: '24/07/2025',
-  });
+  // Initialize with current local date
+  const getCurrentLocalDate = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
 
-  //   State for dropdown visibility
+  const [date, setDate] = useState<string>(getCurrentLocalDate());
+  const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [categoryId, setCategoryId] = useState<string>('');
+  const [walletId, setWalletId] = useState<string>('');
+  const [category, setCategory] = useState<string>('');
+  const [wallet, setWallet] = useState<string>('');
+  const [wallets, setWallets] = useState<{ label: string; value: string }[]>([]);
+  const [categories, setCategories] = useState<{ label: string; value: string }[]>([]);
+
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [showWalletDropdown, setShowWalletDropdown] = useState(false);
 
-  //   Category options array
-  const categories = [
-    { label: 'Food & Dining', value: 'food' },
-    { label: 'Transportation', value: 'transport' },
-    { label: 'Shopping', value: 'shopping' },
-    { label: 'Entertainment', value: 'entertainment' },
-    { label: 'Bills & Utilities', value: 'bills' },
-  ];
+  const isFocused = useIsFocused();
 
-  //   Wallet options array
-  const wallets = [
-    { label: 'Cash', value: 'cash' },
-    { label: 'Bank Account', value: 'bank' },
-    { label: 'Credit Card', value: 'credit' },
-    { label: 'Digital Wallet', value: 'digital' },
-  ];
+  useEffect(() => {
+    const fetchWallets = async (token: string) => {
+      const response = await fetch(`${BASE_URL}/api/wallets`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const walletOptions = data.map((wallet: { _id: string; name: string }) => ({
+          label: wallet.name,
+          value: wallet._id,
+        }));
+        setWallets(walletOptions);
+      }
+    };
+    const fetchCategories = async (token: string) => {
+      const response = await fetch(`${BASE_URL}/api/categories`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const categoryOptions = data.map((category: { _id: string; name: string }) => ({
+          label: category.name,
+          value: category._id,
+        }));
+        setCategories(categoryOptions);
+      }
+    };
+    const fetchInitialData = async () => {
+      const token = await SecureStore.getItemAsync('access_token');
+      if (token) {
+        setToken(token);
+        fetchWallets(token);
+        fetchCategories(token);
+      }
+    };
+    if (isFocused) {
+      fetchInitialData();
+      setName('');
+      setDescription('');
+      setAmmount(0);
+      setDate(getCurrentLocalDate());
+      setCategoryId('');
+      setWalletId('');
+      setCategory('');
+      setWallet('');
+      setCategory('');
+      setShowCategoryDropdown(false);
+      setShowWalletDropdown(false);
+    }
+  }, [isFocused]);
 
-  //   Form input handler function
-  const handleInputChange = (field: keyof TransactionData, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+  //   Date picker handler
+  const onDateChange = (event: any, selectedDate?: Date) => {
+    const currentDate = selectedDate || new Date();
+    setShowDatePicker(Platform.OS === 'ios');
+    setSelectedDate(currentDate);
+
+    // Format date as YYYY-MM-DD for the API using local timezone
+    const year = currentDate.getFullYear();
+    const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+    const day = String(currentDate.getDate()).padStart(2, '0');
+    const formattedDate = `${year}-${month}-${day}`;
+    setDate(formattedDate);
+  };
+
+  //   Format date for display (DD-MM-YYYY) using local timezone
+  const formatDateForDisplay = (dateString: string) => {
+    // Parse the date string as local date (not UTC)
+    const [year, month, day] = dateString.split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+
+    const displayDay = String(date.getDate()).padStart(2, '0');
+    const displayMonth = String(date.getMonth() + 1).padStart(2, '0');
+    const displayYear = date.getFullYear();
+    return `${displayDay}-${displayMonth}-${displayYear}`;
   };
 
   //   Category selection handler
   const handleCategorySelect = (category: { label: string; value: string }) => {
-    handleInputChange('category', category.label);
+    setCategoryId(category.value);
+    setCategory(category.label);
     setShowCategoryDropdown(false);
   };
 
   //   Wallet selection handler
   const handleWalletSelect = (wallet: { label: string; value: string }) => {
-    handleInputChange('wallet', wallet.label);
+    setWalletId(wallet.value);
+    setWallet(wallet.label);
     setShowWalletDropdown(false);
   };
 
-  //   Form validation function
-  const validateForm = (): boolean => {
-    if (!formData.amount.trim()) {
-      Alert.alert('Error', 'Please enter an amount');
-      return false;
-    }
-    if (!formData.description.trim()) {
-      Alert.alert('Error', 'Please enter a description');
-      return false;
-    }
-    if (!formData.category) {
-      Alert.alert('Error', 'Please select a category');
-      return false;
-    }
-    if (!formData.wallet) {
-      Alert.alert('Error', 'Please select a wallet');
-      return false;
-    }
-    return true;
-  };
-
   //   Add transaction handler with validation and navigation
-  const handleAddTransaction = () => {
-    if (!validateForm()) return;
-
-    //   Show success message and navigate back
-    Alert.alert('Success', 'Transaction added successfully!', [
-      {
-        text: 'OK',
-        onPress: () => {
-          //   Navigate back to Home screen
-          navigation.navigate('Home');
-        },
+  const handleAddTransaction = async () => {
+    const response = await fetch(`${BASE_URL}/api/transactions`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
       },
-    ]);
+      body: JSON.stringify({
+        name,
+        description,
+        ammount: Number(ammount),
+        date,
+        category_id: categoryId,
+        wallet_id: walletId,
+      }),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      Alert.alert('Error', error.message || 'Failed to add transaction');
+      return;
+    } else {
+      navigation.navigate('Home');
+    }
   };
 
   //   Custom dropdown component
@@ -145,6 +212,17 @@ export default function CreateScreen() {
       {/*   Main form content with scroll */}
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.formContainer}>
+          {/*   Name input field */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Transaction Name</Text>
+            <TextInput
+              style={styles.textInput}
+              value={name}
+              onChangeText={(value) => setName(value)}
+              placeholder="Enter name"
+              placeholderTextColor="#D1D5DB"
+            />
+          </View>
           {/*   Amount input field */}
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>Amount</Text>
@@ -152,8 +230,8 @@ export default function CreateScreen() {
               <Text style={styles.currencyPrefix}>Rp.</Text>
               <TextInput
                 style={styles.amountInput}
-                value={formData.amount}
-                onChangeText={(value) => handleInputChange('amount', value)}
+                value={ammount.toString()}
+                onChangeText={(value) => setAmmount(Number(value))}
                 placeholder="0"
                 placeholderTextColor="#9CA3AF"
                 keyboardType="numeric"
@@ -166,12 +244,35 @@ export default function CreateScreen() {
             <Text style={styles.inputLabel}>Description</Text>
             <TextInput
               style={styles.textInput}
-              value={formData.description}
-              onChangeText={(value) => handleInputChange('description', value)}
+              value={description}
+              onChangeText={(value) => setDescription(value)}
               placeholder="Enter description"
               placeholderTextColor="#D1D5DB"
             />
           </View>
+
+          {/*   Date input field with calendar icon */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Date</Text>
+            <TouchableOpacity
+              style={styles.dateInputContainer}
+              onPress={() => setShowDatePicker(true)}>
+              <Text style={styles.dateInputText}>{formatDateForDisplay(date)}</Text>
+              <Calendar size={20} color="#9CA3AF" style={styles.calendarIcon} />
+            </TouchableOpacity>
+          </View>
+
+          {/* Date Picker Modal */}
+          {showDatePicker && (
+            <DateTimePicker
+              testID="dateTimePicker"
+              value={selectedDate}
+              mode="date"
+              is24Hour={true}
+              display="default"
+              onChange={onDateChange}
+            />
+          )}
 
           {/*   Category selector field with dropdown */}
           <View style={styles.inputGroup}>
@@ -185,9 +286,9 @@ export default function CreateScreen() {
               <Text
                 style={[
                   styles.selectText,
-                  formData.category ? styles.selectedText : styles.placeholderText,
+                  category ? styles.selectedText : styles.placeholderText,
                 ]}>
-                {formData.category || 'Select category'}
+                {category || 'Select category'}
               </Text>
               <ChevronDown
                 size={20}
@@ -209,11 +310,8 @@ export default function CreateScreen() {
                 setShowCategoryDropdown(false); // Close other dropdown
               }}>
               <Text
-                style={[
-                  styles.selectText,
-                  formData.wallet ? styles.selectedText : styles.placeholderText,
-                ]}>
-                {formData.wallet || 'Select wallet'}
+                style={[styles.selectText, wallet ? styles.selectedText : styles.placeholderText]}>
+                {wallet || 'Select wallet'}
               </Text>
               <ChevronDown
                 size={20}
@@ -223,21 +321,6 @@ export default function CreateScreen() {
             </TouchableOpacity>
             {/*   Wallet dropdown options */}
             {renderDropdown(showWalletDropdown, wallets, handleWalletSelect)}
-          </View>
-
-          {/*   Date input field with calendar icon */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Date</Text>
-            <View style={styles.dateInputContainer}>
-              <TextInput
-                style={styles.dateInput}
-                value={formData.date}
-                onChangeText={(value) => handleInputChange('date', value)}
-                placeholder="DD/MM/YYYY"
-                placeholderTextColor="#9CA3AF"
-              />
-              <Calendar size={20} color="#9CA3AF" style={styles.calendarIcon} />
-            </View>
           </View>
 
           {/*   Add transaction submit button */}
@@ -368,6 +451,11 @@ const styles = StyleSheet.create({
     height: 48,
   },
   dateInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#1F2937',
+  },
+  dateInputText: {
     flex: 1,
     fontSize: 16,
     color: '#1F2937',
