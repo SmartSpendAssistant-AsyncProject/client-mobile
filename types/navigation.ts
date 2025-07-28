@@ -17,6 +17,12 @@ export type RootStackParamList = {
   Home: undefined;
 
   CreateCategory: undefined;
+  Notification: undefined;
+  NotificationDetail: {
+    id: string;
+    title: string;
+    description: string;
+  };
 };
 
 export type RootStackNavigationProp = NativeStackNavigationProp<RootStackParamList>;
