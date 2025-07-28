@@ -15,6 +15,8 @@ export type RootStackParamList = {
   Chat: undefined;
   Profile: undefined;
   Home: undefined;
+
+  CreateCategory: undefined;
 };
 
 export type RootStackNavigationProp = NativeStackNavigationProp<RootStackParamList>;
