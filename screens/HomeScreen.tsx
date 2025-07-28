@@ -282,32 +282,13 @@ export default function HomeScreen() {
     }
   }, [isFocused]); // Empty dependency array means this runs once when component mounts
 
-  //   Handle transaction item press with navigation placeholder
-  const handleTransactionPress = (transaction: Transaction) => {
-    Alert.alert(
-      'Transaction Details',
-      `Category: ${transaction.category}\nAmount: ${transaction.amount}\nDescription: ${transaction.description}`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'View Details',
-          onPress: () => {
-            //   Placeholder for future navigation to transaction details
-            console.log('Navigate to transaction details for ID:', transaction.id);
-            // TODO: Navigate to transaction details screen
-            // navigation.navigate('TransactionDetails', { transactionId: transaction.id });
-          },
-        },
-      ]
-    );
-  };
-
   //   Navigate to different wallet management screens
   const navigateToWallets = () => navigation.navigate('Wallets');
   const navigateToDebt = () => navigation.navigate('Debt');
   const navigateToLoan = () => navigation.navigate('Loan');
   const navigateToReport = () => navigation.navigate('Report');
   const navigateToNotification = () => navigation.navigate('Notification');
+  const navigateToUpdate = (_id: string) => navigation.navigate('Update', { _id });
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
@@ -549,7 +530,7 @@ export default function HomeScreen() {
                 <TouchableOpacity
                   key={transaction.id}
                   style={[styles.transactionCard, { backgroundColor: transaction.bgColor }]}
-                  onPress={() => handleTransactionPress(transaction)}
+                  onPress={() => navigateToUpdate(transaction.id)}
                   activeOpacity={0.7}>
                   <View style={styles.transactionContent}>
                     <View style={styles.transactionInfo}>
