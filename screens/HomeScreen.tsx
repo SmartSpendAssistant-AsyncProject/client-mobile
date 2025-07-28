@@ -7,7 +7,6 @@ import {
   StyleSheet,
   SafeAreaView,
   Alert,
-  Pressable,
   StatusBar,
 } from 'react-native';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
@@ -21,6 +20,8 @@ import {
   TrendingDown,
   DollarSign,
 } from 'lucide-react-native';
+import { VictoryChart, VictoryLine, VictoryArea, VictoryAxis, VictoryTheme } from 'victory-native';
+import { Dimensions } from 'react-native';
 
 //   Transaction interface for type safety
 interface Transaction {
@@ -126,6 +127,10 @@ export default function HomeScreen() {
   const [monthlyIncome, setMonthlyIncome] = useState(0);
   const [monthlyExpense, setMonthlyExpense] = useState(0);
 
+  //   Chart data state
+  const [incomeChartData, setIncomeChartData] = useState<Array<{ x: number; y: number }>>([]);
+  const [expenseChartData, setExpenseChartData] = useState<Array<{ x: number; y: number }>>([]);
+
   //   Transaction data array with sample data
   const [transactions, setTransactions] = useState<Transaction[] | undefined>();
 
@@ -154,6 +159,61 @@ export default function HomeScreen() {
           setLoan(data.summayAllTransactions.totalLoan);
           setMonthlyIncome(data.summaryData.income);
           setMonthlyExpense(data.summaryData.expense);
+
+          // Process daily chart data from API
+          const currentDate = new Date();
+          const daysInMonth = new Date(
+            currentDate.getFullYear(),
+            currentDate.getMonth() + 1,
+            0
+          ).getDate();
+
+          // Initialize daily data
+          const dailyIncome: { [key: number]: number } = {};
+          const dailyExpense: { [key: number]: number } = {};
+
+          const allDay: { [key: number]: number } = {};
+
+          // Group transactions by day
+          data.data.forEach((transaction) => {
+            const transactionDate = new Date(transaction.date);
+            const day = transactionDate.getDate();
+
+            allDay[day] = day;
+
+            if (transaction.category.type === 'income' || transaction.category.type === 'debt') {
+              dailyIncome[day] = (dailyIncome[day] || 0) + transaction.ammount;
+            } else if (
+              transaction.category.type === 'expense' ||
+              transaction.category.type === 'loan'
+            ) {
+              dailyExpense[day] = (dailyExpense[day] || 0) + transaction.ammount;
+            }
+          });
+
+          // Create chart data arrays
+          const incomeData = [];
+          const expenseData = [];
+
+          for (let day = 1; day <= daysInMonth; day++) {
+            incomeData.push({
+              x: day,
+              y: dailyIncome[day] || 0,
+            });
+            expenseData.push({
+              x: day,
+              y: dailyExpense[day] || 0,
+            });
+          }
+
+          setIncomeChartData(incomeData);
+          setExpenseChartData(expenseData);
+
+          // If no data available, show empty chart with zero values
+          if (data.data.length === 0) {
+            console.log('No transaction data available, showing empty chart');
+          }
+
           if (data.data.length > 0) {
             const latestTransaction = new Date(data.data[0].date).toISOString().split('T')[0];
             const latestTransactions = data.data.filter(
@@ -180,12 +240,10 @@ export default function HomeScreen() {
             setTransactions(formattedTransactions);
           }
         } else {
-          console.log('❌ Failed to fetch transactions. Status:', response.status);
-          const errorText = await response.text();
-          console.log('Error response:', errorText);
+          console.log('Failed to fetch transactions. Status:', response.status);
         }
       } catch (error) {
-        console.error('❌ Error fetching transactions:', error);
+        console.error('Error fetching transactions:', error);
       }
     };
     const fethchWallets = async () => {
@@ -368,6 +426,110 @@ export default function HomeScreen() {
             </View>
           </View>
 
+          {/*   Daily Transaction Chart */}
+          <View style={styles.chartContainer}>
+            <View style={styles.chartHeader}>
+              <Text style={styles.chartTitle}>Daily Income vs Expense</Text>
+              <Text style={styles.chartSubtitle}>
+                {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+              </Text>
+            </View>
+
+            {incomeChartData.length > 0 && expenseChartData.length > 0 ? (
+              <VictoryChart
+                theme={VictoryTheme.material}
+                height={200}
+                width={Dimensions.get('window').width - 72} // Screen width minus padding
+                padding={{ left: 60, top: 20, right: 0, bottom: 40 }}>
+                <VictoryAxis
+                  dependentAxis
+                  // tickFormat={(t) => `${t.toFixed(1)}M`}
+                  style={{
+                    tickLabels: { fontSize: 10, fill: '#6B7280' },
+                    grid: { stroke: '#F3F4F6', strokeWidth: 1 },
+                  }}
+                />
+
+                <VictoryAxis
+                  style={{
+                    tickLabels: { fontSize: 10, fill: '#6B7280' },
+                    axis: { stroke: '#E5E7EB' },
+                  }}
+                  tickCount={8}
+                />
+
+                <VictoryArea
+                  data={incomeChartData}
+                  style={{
+                    data: {
+                      fill: '#10B981',
+                      fillOpacity: 0.2,
+                      stroke: '#10B981',
+                      strokeWidth: 3,
+                    },
+                  }}
+                  animate={{
+                    duration: 1000,
+                    onLoad: { duration: 500 },
+                  }}
+                />
+
+                <VictoryArea
+                  data={expenseChartData}
+                  style={{
+                    data: {
+                      fill: '#EF4444',
+                      fillOpacity: 0.2,
+                      stroke: '#EF4444',
+                      strokeWidth: 3,
+                    },
+                  }}
+                  animate={{
+                    duration: 1000,
+                    onLoad: { duration: 500 },
+                  }}
+                />
+
+                <VictoryLine
+                  data={incomeChartData}
+                  style={{
+                    data: { stroke: '#10B981', strokeWidth: 3 },
+                  }}
+                  animate={{
+                    duration: 1000,
+                    onLoad: { duration: 500 },
+                  }}
+                />
+
+                <VictoryLine
+                  data={expenseChartData}
+                  style={{
+                    data: { stroke: '#EF4444', strokeWidth: 3 },
+                  }}
+                  animate={{
+                    duration: 1000,
+                    onLoad: { duration: 500 },
+                  }}
+                />
+              </VictoryChart>
+            ) : (
+              <View style={styles.chartPlaceholder}>
+                <Text style={styles.placeholderText}>Loading chart data...</Text>
+              </View>
+            )}
+
+            <View style={styles.chartLegend}>
+              <View style={styles.legendItem}>
+                <View style={[styles.legendColor, { backgroundColor: '#10B981' }]} />
+                <Text style={styles.legendText}>Income</Text>
+              </View>
+              <View style={styles.legendItem}>
+                <View style={[styles.legendColor, { backgroundColor: '#EF4444' }]} />
+                <Text style={styles.legendText}>Expense</Text>
+              </View>
+            </View>
+          </View>
+
           {/*   Transaction list section */}
           <View style={styles.transactionHeader}>
             <Text style={styles.sectionTitle}>Recent Transactions</Text>
@@ -533,6 +695,65 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     marginBottom: 16,
     marginTop: 8,
+  },
+
+  //   Chart styles
+  chartContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  chartHeader: {},
+  chartTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    marginBottom: 4,
+  },
+  chartSubtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  chart: {
+    borderRadius: 16,
+    marginVertical: 8,
+  },
+  chartPlaceholder: {
+    height: 200,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+    borderRadius: 16,
+  },
+  placeholderText: {
+    color: '#6B7280',
+    fontSize: 14,
+  },
+  chartLegend: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 24,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  legendColor: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+  legendText: {
+    fontSize: 14,
+    color: '#1F2937',
+    fontWeight: '500',
   },
 
   //   Transaction header styles
