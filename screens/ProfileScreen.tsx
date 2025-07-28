@@ -10,6 +10,8 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { RootStackNavigationProp } from '../types/navigation';
+import * as SecureStore from 'expo-secure-store';
+
 
 export default function ProfileScreen() {
   // ALGORITMANYA: Navigation and State Management
@@ -82,21 +84,23 @@ export default function ProfileScreen() {
         style: 'destructive',
         onPress: async () => {
           try {
-            // TODO: Add logout API call
-            // await api.logout();
-            console.log('User signed out');
+            // Hapus token
+            await SecureStore.deleteItemAsync('access_token');
+
+            // Navigasi ke halaman login dan reset stack
             navigation.reset({
               index: 0,
               routes: [{ name: 'Login' }],
             });
           } catch (error) {
-            console.error('Error signing out:', error);
-            Alert.alert('Error', 'Failed to sign out');
+            console.error('Logout error:', error);
+            Alert.alert('Error', 'Failed to sign out. Please try again.');
           }
         },
       },
     ]);
   };
+
 
   return (
     // ALGORITHM: Main Container Setup
