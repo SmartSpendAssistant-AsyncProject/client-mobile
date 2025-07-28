@@ -13,8 +13,11 @@ import WalletsScreen from './screens/WalletsScreen';
 import CreateWalletScreen from './screens/CreateWalletScreen';
 import MainTabs from 'navigators/MainTabs';
 import CreateCategoryScreen from './screens/CreateCategoryScreen';
+import UpgradePlanScreen from './screens/UpgradePlanScreen';
 
-const Stack = createNativeStackNavigator();
+import { RootStackParamList } from './types/navigation';
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
   return (
@@ -31,6 +34,7 @@ export default function App() {
         <Stack.Screen name="Loan" component={LoanScreen} />
         <Stack.Screen name="DebtCollection" component={DebtcollectionScreen} />
         <Stack.Screen name="CreateCategory" component={CreateCategoryScreen} />
+        <Stack.Screen name="UpgradePlan" component={UpgradePlanScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

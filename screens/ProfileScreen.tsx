@@ -55,10 +55,18 @@ export default function ProfileScreen() {
 
   // ALGORITHM: Upgrade Plan Handler
   // Line 11: Handle plan upgrade navigation
-  const handleUpgradePlan = () => {
-    // TODO: Navigate to upgrade screen or handle upgrade logic
-    console.log('Navigating to upgrade plan...');
-    // navigation.navigate('UpgradePlan');
+  const handleUpgradePlan = async () => {
+    const response = await fetch('https://ssa-server-omega.vercel.app/api/payments', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${'eyJhbGciOiJIUzI1NiJ9.eyJfaWQiOiI2ODgyNDhmYjc2NTM3ZGQ0ZjZjYzllMDkifQ.Wg9sGQZ4Go_rLGXtwiJPUshoee5wW1GjELrzwiLU850'}`,
+      },
+    });
+
+    const data = await response.json();
+    if (response.ok) {
+      navigation.navigate('UpgradePlan', { uri: data.paymentUrl });
+    }
   };
 
   // ALGORITHM: Edit Profile Handler

@@ -17,6 +17,7 @@ export type RootStackParamList = {
   Home: undefined;
 
   CreateCategory: undefined;
+  UpgradePlan: { uri: string };
 };
 
 export type RootStackNavigationProp = NativeStackNavigationProp<RootStackParamList>;
