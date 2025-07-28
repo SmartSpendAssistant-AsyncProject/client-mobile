@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { RootStackNavigationProp } from '../types/navigation';
+import * as Notifications from 'expo-notifications';
 
 //   Transaction interface for type safety
 interface Transaction {
@@ -94,6 +95,15 @@ export interface Filter {
   parent_id: any;
   wallet_id: any;
 }
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
 
 export default function HomeScreen() {
   //   Navigation hook for screen transitions

@@ -1,30 +1,27 @@
 {
   "expo": {
     "name": "Smart Spend Assistant",
-    "slug": "Smart Spend Assistant",
+    "scheme": "smartspendassistant",
+    "slug": "smart-spend-assistant",
     "version": "1.0.0",
-
     "web": {
       "favicon": "./assets/favicon.png"
     },
-
     "experiments": {
       "tsconfigPaths": true
     },
-
     "plugins": [],
-
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-
     "userInterfaceStyle": "light",
-
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true
     },
@@ -32,6 +29,13 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
+      },
+      "package": "com.lycanix.SmartSpendAssistant"
+    },
+    "owner": "lycanix",
+    "extra": {
+      "eas": {
+        "projectId": "249517db-9d9e-4789-ad40-ca38292b834e"
       }
     }
   }
