@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { RootStackNavigationProp } from '../types/navigation';
+import * as Notifications from 'expo-notifications';
 
 //   Transaction interface for type safety
 interface Transaction {
@@ -20,6 +21,15 @@ interface Transaction {
   bgColor: string;
   type: 'income' | 'expense';
 }
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
 
 export default function HomeScreen() {
   //   Navigation hook for screen transitions
@@ -75,6 +85,22 @@ export default function HomeScreen() {
       type: 'expense',
     },
   ]);
+
+  useEffect(() => {
+    const notificationListener = Notifications.addNotificationReceivedListener((notification) => {
+      console.log('Notification received:', notification);
+      
+    });
+
+    const responseListener = Notifications.addNotificationResponseReceivedListener((response) => {
+      console.log(response);
+    });
+
+    return () => {
+      notificationListener.remove();
+      responseListener.remove();
+    };
+  }, []);
 
   //   Handle transaction item press with navigation placeholder
   const handleTransactionPress = (transaction: Transaction) => {
