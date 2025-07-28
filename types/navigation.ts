@@ -18,6 +18,12 @@ export type RootStackParamList = {
 
   CreateCategory: undefined;
   UpgradePlan: { uri: string };
+  Notification: undefined;
+  NotificationDetail: {
+    id: string;
+    title: string;
+    description: string;
+  };
 };
 
 export type RootStackNavigationProp = NativeStackNavigationProp<RootStackParamList>;

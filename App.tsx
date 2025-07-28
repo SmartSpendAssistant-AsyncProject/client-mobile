@@ -13,6 +13,8 @@ import WalletsScreen from './screens/WalletsScreen';
 import CreateWalletScreen from './screens/CreateWalletScreen';
 import MainTabs from 'navigators/MainTabs';
 import CreateCategoryScreen from './screens/CreateCategoryScreen';
+import NotificationScreen from './screens/NotificationScreen';
+import NotificationDetailScreen from './screens/NotificationDetailScreen';
 import UpgradePlanScreen from './screens/UpgradePlanScreen';
 
 import { RootStackParamList } from './types/navigation';
@@ -35,6 +37,8 @@ export default function App() {
         <Stack.Screen name="DebtCollection" component={DebtcollectionScreen} />
         <Stack.Screen name="CreateCategory" component={CreateCategoryScreen} />
         <Stack.Screen name="UpgradePlan" component={UpgradePlanScreen} />
+        <Stack.Screen name="Notification" component={NotificationScreen} />
+        <Stack.Screen name="NotificationDetail" component={NotificationDetailScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
