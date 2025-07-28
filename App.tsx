@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from './utils/AuthContext';
 
 import LoginScreen from './screens/LoginScreen';
 import RegisterScreen from './screens/RegisterScreen';
+import UpdateScreen from './screens/UpdateScreen';
 
 import DebtScreen from './screens/DebtScreen';
 import LoanScreen from './screens/LoanScreen';
@@ -49,6 +50,7 @@ function AppNavigator() {
         <Stack.Screen name="UpgradePlan" component={UpgradePlanScreen} />
         <Stack.Screen name="Notification" component={NotificationScreen} />
         <Stack.Screen name="NotificationDetail" component={NotificationDetailScreen} />
+        <Stack.Screen name="Update" component={UpdateScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

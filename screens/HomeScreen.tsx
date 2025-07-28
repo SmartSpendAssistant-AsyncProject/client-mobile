@@ -22,6 +22,7 @@ import {
 } from 'lucide-react-native';
 import { VictoryChart, VictoryLine, VictoryArea, VictoryAxis, VictoryTheme } from 'victory-native';
 import { Dimensions } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
 
 //   Transaction interface for type safety
 interface Transaction {
@@ -35,9 +36,7 @@ interface Transaction {
   date: string; // Assuming date is a string in ISO format
 }
 
-const BASE_URL = process.env.BASE_URL || 'https://ssa-server-omega.vercel.app';
-const access_token =
-  'eyJhbGciOiJIUzI1NiJ9.eyJfaWQiOiI2ODgyNDhmYjc2NTM3ZGQ0ZjZjYzllMDkifQ.Wg9sGQZ4Go_rLGXtwiJPUshoee5wW1GjELrzwiLU850';
+const BASE_URL: string = process.env.BASE_URL || 'https://ssa-server-omega.vercel.app';
 
 export interface ITransactionsResponse {
   message: string;
@@ -138,7 +137,7 @@ export default function HomeScreen() {
 
   // Fetch transactions data from API
   useEffect(() => {
-    const fetchTransactions = async () => {
+    const fetchTransactions = async (access_token: string) => {
       try {
         console.log('Fetching transactions from API...');
         // Get current month and year in YYYY-MM format
@@ -246,7 +245,7 @@ export default function HomeScreen() {
         console.error('Error fetching transactions:', error);
       }
     };
-    const fethchWallets = async () => {
+    const fetchWallets = async (access_token: string) => {
       try {
         const response = await fetch(`${BASE_URL}/api/wallets`, {
           method: 'GET',
@@ -271,31 +270,17 @@ export default function HomeScreen() {
         console.error('❌ Error fetching wallets:', error);
       }
     };
+    const fetchAllData = async () => {
+      const access_token = await SecureStore.getItemAsync('access_token');
+      if (access_token) {
+        fetchTransactions(access_token);
+        fetchWallets(access_token);
+      }
+    };
     if (isFocused) {
-      fetchTransactions();
-      fethchWallets();
+      fetchAllData();
     }
   }, [isFocused]); // Empty dependency array means this runs once when component mounts
-
-  //   Handle transaction item press with navigation placeholder
-  const handleTransactionPress = (transaction: Transaction) => {
-    Alert.alert(
-      'Transaction Details',
-      `Category: ${transaction.category}\nAmount: ${transaction.amount}\nDescription: ${transaction.description}`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'View Details',
-          onPress: () => {
-            //   Placeholder for future navigation to transaction details
-            console.log('Navigate to transaction details for ID:', transaction.id);
-            // TODO: Navigate to transaction details screen
-            // navigation.navigate('TransactionDetails', { transactionId: transaction.id });
-          },
-        },
-      ]
-    );
-  };
 
   //   Navigate to different wallet management screens
   const navigateToWallets = () => navigation.navigate('Wallets');
@@ -303,6 +288,7 @@ export default function HomeScreen() {
   const navigateToLoan = () => navigation.navigate('Loan');
   const navigateToReport = () => navigation.navigate('Report');
   const navigateToNotification = () => navigation.navigate('Notification');
+  const navigateToUpdate = (_id: string) => navigation.navigate('Update', { _id });
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
@@ -544,7 +530,7 @@ export default function HomeScreen() {
                 <TouchableOpacity
                   key={transaction.id}
                   style={[styles.transactionCard, { backgroundColor: transaction.bgColor }]}
-                  onPress={() => handleTransactionPress(transaction)}
+                  onPress={() => navigateToUpdate(transaction.id)}
                   activeOpacity={0.7}>
                   <View style={styles.transactionContent}>
                     <View style={styles.transactionInfo}>
