@@ -19,6 +19,7 @@ type CardDebtCreditProps = {
   date: string;
   remaining_ammount: number;
   onPress: () => void;
+  onDetailPress?: () => void;
   buttonLabel?: string;
 };
 
@@ -30,6 +31,7 @@ export default function CardDebtCredit({
   date,
   remaining_ammount,
   onPress,
+  onDetailPress,
   buttonLabel,
 }: CardDebtCreditProps) {
   return (
@@ -69,14 +71,38 @@ export default function CardDebtCredit({
         <Text className="ml-2 text-xs text-gray-500">{format(new Date(date), 'MM/dd/yyyy')}</Text>
       </View>
 
-      {/* Action Button */}
-      <Pressable
-        onPress={onPress} // yang akan digunakan untuk navigasi berbeda pada load/debt screens
-        style={{ marginTop: 12, borderRadius: 8, backgroundColor: '#3b667c', paddingVertical: 8 }}>
-        <Text style={{ textAlign: 'center', fontWeight: '600', color: 'white' }}>
-          {buttonLabel}
-        </Text>
-      </Pressable>
+      {/* Action Buttons */}
+      <View style={{ marginTop: 12, flexDirection: 'row', gap: 8 }}>
+        {onDetailPress && (
+          <Pressable
+            onPress={onDetailPress}
+            style={{ 
+              flex: 1, 
+              borderRadius: 8, 
+              backgroundColor: '#6c757d', 
+              paddingVertical: 8,
+              marginRight: 4
+            }}>
+            <Text style={{ textAlign: 'center', fontWeight: '600', color: 'white' }}>
+              View Details
+            </Text>
+          </Pressable>
+        )}
+        
+        <Pressable
+          onPress={onPress}
+          style={{ 
+            flex: 1, 
+            borderRadius: 8, 
+            backgroundColor: '#3b667c', 
+            paddingVertical: 8,
+            marginLeft: onDetailPress ? 4 : 0
+          }}>
+          <Text style={{ textAlign: 'center', fontWeight: '600', color: 'white' }}>
+            {buttonLabel}
+          </Text>
+        </Pressable>
+      </View>
     </View>
   );
 }

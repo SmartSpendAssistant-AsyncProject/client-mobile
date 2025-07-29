@@ -10,7 +10,9 @@ import RegisterScreen from './screens/RegisterScreen';
 import UpdateScreen from './screens/UpdateScreen';
 
 import DebtScreen from './screens/DebtScreen';
+import DebtDetailScreen from './screens/DebtDetailScreen';
 import LoanScreen from './screens/LoanScreen';
+import LoanDetailScreen from './screens/LoanDetailScreen';
 import RepaymentScreen from './screens/RepaymentScreen';
 import DebtcollectionScreen from './screens/DebtcollectionScreen';
 import WalletsScreen from './screens/WalletsScreen';
@@ -43,8 +45,10 @@ function AppNavigator() {
         <Stack.Screen name="Wallets" component={WalletsScreen} />
         <Stack.Screen name="CreateWallet" component={CreateWalletScreen} />
         <Stack.Screen name="Debt" component={DebtScreen} />
+        <Stack.Screen name="DebtDetail" component={DebtDetailScreen} />
         <Stack.Screen name="Repayment" component={RepaymentScreen} />
         <Stack.Screen name="Loan" component={LoanScreen} />
+        <Stack.Screen name="LoanDetail" component={LoanDetailScreen} />
         <Stack.Screen name="DebtCollection" component={DebtcollectionScreen} />
         <Stack.Screen name="CreateCategory" component={CreateCategoryScreen} />
         <Stack.Screen name="UpgradePlan" component={UpgradePlanScreen} />

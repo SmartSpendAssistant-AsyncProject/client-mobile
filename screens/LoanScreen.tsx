@@ -79,6 +79,7 @@ export default function LoanScreen() {
                 date={loan.date}
                 remaining_ammount={loan.remaining_ammount}
                 onPress={() => navigation.navigate('DebtCollection', { loanItem: loan })}
+                onDetailPress={() => navigation.navigate('LoanDetail', { loanId: loan._id })}
                 buttonLabel="Collect now"
               />
             ))
