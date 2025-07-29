@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { RootStackNavigationProp } from 'types/navigation';
@@ -28,6 +29,7 @@ export default function CreateWalletScreen() {
   const [initialBalance, setInitialBalance] = useState('0');
   const [description, setDescription] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
 
   // Wallet type options
   const walletTypes: WalletTypeOption[] = [
@@ -35,24 +37,63 @@ export default function CreateWalletScreen() {
     { value: 'Saving', label: 'Saving', subtitle: 'Savings account' },
   ];
 
-  // Handle wallet creation
-  const handleCreateWallet = (): void => {
-    // Basic validation
+  // Update the handleCreateWallet function
+  const handleCreateWallet = async (): Promise<void> => {
     if (!walletName.trim()) {
       Alert.alert('Error', 'Please enter a wallet name');
       return;
     }
 
     if (!initialBalance || isNaN(Number(initialBalance))) {
-      Alert.alert('Error', 'Please enter a valid initial balance');
+      Alert.alert('Error', 'Please enter a valid balance');
       return;
     }
 
-    // Here you would typically save the wallet data
-    // For now, just show success and navigate back
-    Alert.alert('Success', 'Wallet created successfully!', [
-      { text: 'OK', onPress: () => navigation.goBack() },
-    ]);
+    try {
+      setIsCreating(true);
+
+      // Prepare wallet data for API
+      const walletData = {
+        name: walletName.trim(),
+        description: description.trim(),
+        type: walletType,
+        balance: Number(initialBalance),
+        target: 0, // Default target
+        threshold: 0, // Default threshold
+      };
+
+      // Use the same token format as WalletsScreen
+      const token =
+        'eyJhbGciOiJIUzI1NiJ9.eyJfaWQiOiI2ODg4NmQ1MGU2MDM5YmI4NjkxZTA2OGMifQ.kDNJxvL84nLV5z-l-d_8V9mu-GuFuFOkzSBUjPB4h9A';
+
+      const response = await fetch('https://ssa-server-omega.vercel.app/api/wallets', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(walletData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.log('Error response:', errorData);
+        throw new Error(`HTTP ${response.status}: ${errorData}`);
+      }
+
+      // Show success message and navigate back
+      Alert.alert('Success', 'Wallet created successfully!', [
+        { text: 'OK', onPress: () => navigation.goBack() },
+      ]);
+    } catch (error) {
+      console.error('Error creating wallet:', error);
+      Alert.alert(
+        'Error',
+        error instanceof Error ? error.message : 'Failed to create wallet. Please try again.'
+      );
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   // Format number input for balance
@@ -114,7 +155,7 @@ export default function CreateWalletScreen() {
                 )}
               </View>
             </TouchableOpacity>
-            
+
             {/* Dropdown Options */}
             {isDropdownOpen && (
               <View style={styles.dropdownOptions}>
@@ -123,20 +164,22 @@ export default function CreateWalletScreen() {
                     key={type.value}
                     style={[
                       styles.dropdownOption,
-                      walletType === type.value && styles.selectedDropdownOption
+                      walletType === type.value && styles.selectedDropdownOption,
                     ]}
                     onPress={() => selectWalletType(type.value)}>
                     <View>
-                      <Text style={[
-                        styles.dropdownOptionTitle,
-                        walletType === type.value && styles.selectedDropdownText
-                      ]}>
+                      <Text
+                        style={[
+                          styles.dropdownOptionTitle,
+                          walletType === type.value && styles.selectedDropdownText,
+                        ]}>
                         {type.label}
                       </Text>
-                      <Text style={[
-                        styles.dropdownOptionSubtitle,
-                        walletType === type.value && styles.selectedDropdownSubtext
-                      ]}>
+                      <Text
+                        style={[
+                          styles.dropdownOptionSubtitle,
+                          walletType === type.value && styles.selectedDropdownSubtext,
+                        ]}>
                         {type.subtitle}
                       </Text>
                     </View>
@@ -181,8 +224,15 @@ export default function CreateWalletScreen() {
 
       {/* Create Button */}
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.createButton} onPress={handleCreateWallet}>
-          <Text style={styles.createButtonText}>Create Wallet</Text>
+        <TouchableOpacity
+          style={[styles.createButton, isCreating && styles.createButtonDisabled]}
+          onPress={handleCreateWallet}
+          disabled={isCreating}>
+          {isCreating ? (
+            <Text style={styles.createButtonText}>Creating...</Text>
+          ) : (
+            <Text style={styles.createButtonText}>Create Wallet</Text>
+          )}
         </TouchableOpacity>
       </View>
     </View>
@@ -348,5 +398,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: 'white',
+  },
+  createButtonDisabled: {
+    backgroundColor: '#A0A0A0',
+    opacity: 0.7,
   },
 });
