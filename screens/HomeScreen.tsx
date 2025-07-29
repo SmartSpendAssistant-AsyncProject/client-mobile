@@ -262,12 +262,12 @@ export default function HomeScreen() {
           );
           setWalletBalance(totalBalance);
         } else {
-          console.log('❌ Failed to fetch wallets. Status:', response.status);
+          console.log('  Failed to fetch wallets. Status:', response.status);
           const errorText = await response.text();
           console.log('Error response:', errorText);
         }
       } catch (error) {
-        console.error('❌ Error fetching wallets:', error);
+        console.error('  Error fetching wallets:', error);
       }
     };
     const fetchAllData = async () => {
