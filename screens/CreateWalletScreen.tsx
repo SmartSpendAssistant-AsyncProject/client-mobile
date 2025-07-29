@@ -7,7 +7,6 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
-  ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { RootStackNavigationProp } from 'types/navigation';
@@ -27,7 +26,9 @@ export default function CreateWalletScreen() {
   // Form state management
   const [walletName, setWalletName] = useState('');
   const [walletType, setWalletType] = useState('Cash');
-  const [initialBalance, setInitialBalance] = useState('0');
+  const [initialBalance, setInitialBalance] = useState('');
+  const [walletThreshold, setWalletThreshold] = useState('');
+  const [savingTarget, setSavingTarget] = useState('');
   const [description, setDescription] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -59,8 +60,8 @@ export default function CreateWalletScreen() {
         description: description.trim(),
         type: walletType,
         balance: Number(initialBalance),
-        target: 0, // Default target
-        threshold: 0, // Default threshold
+        target: Number(savingTarget),
+        threshold: Number(walletThreshold),
       };
 
       // Use the same token format as WalletsScreen
@@ -97,11 +98,11 @@ export default function CreateWalletScreen() {
   };
 
   // Format number input for balance
-  const formatBalance = (text: string): void => {
-    // Remove non-numeric characters except dots
-    const numericValue = text.replace(/[^0-9]/g, '');
-    setInitialBalance(numericValue);
-  };
+  // const formatBalance = (text: string): void => {
+  //   // Remove non-numeric characters except dots
+  //   const numericValue = text.replace(/[^0-9]/g, '');
+  //   setInitialBalance(numericValue);
+  // };
 
   // Handle wallet type selection
   const selectWalletType = (type: string): void => {
@@ -200,11 +201,45 @@ export default function CreateWalletScreen() {
               placeholder="0"
               placeholderTextColor="#A0A0A0"
               value={initialBalance}
-              onChangeText={formatBalance}
+              onChangeText={setInitialBalance}
               keyboardType="numeric"
             />
           </View>
         </View>
+
+        {/* Wallet Threshold */}
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Wallet Threshold</Text>
+          <View style={styles.balanceContainer}>
+            <Text style={styles.currencyPrefix}>Rp.</Text>
+            <TextInput
+              style={styles.balanceInput}
+              placeholder="0"
+              placeholderTextColor="#A0A0A0"
+              value={walletThreshold}
+              onChangeText={setWalletThreshold}
+              keyboardType="numeric"
+            />
+          </View>
+        </View>
+
+        {/* Saving target */}
+        {walletType === 'Saving' && (
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Saving Target</Text>
+            <View style={styles.balanceContainer}>
+              <Text style={styles.currencyPrefix}>Rp.</Text>
+              <TextInput
+                style={styles.balanceInput}
+                placeholder="0"
+                placeholderTextColor="#A0A0A0"
+                value={savingTarget}
+                onChangeText={setSavingTarget}
+                keyboardType="numeric"
+              />
+            </View>
+          </View>
+        )}
 
         {/* Description */}
         <View style={styles.formGroup}>
