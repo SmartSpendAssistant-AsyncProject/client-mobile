@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,7 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { RootStackNavigationProp } from '../types/navigation';
 import * as SecureStore from 'expo-secure-store';
 
@@ -123,9 +123,14 @@ export default function ProfileScreen() {
     ]);
   };
 
-  useEffect(() => {
-    fetchUserProfile();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchUserProfile();
+      return () => {
+        console.log('ProfileScreen focus effect cleanup');
+      };
+    }, [])
+  );
 
   // Show loading screen when data is being fetched
   if (isLoading) {
@@ -177,18 +182,22 @@ export default function ProfileScreen() {
             </View>
           </View>
 
-          <View style={styles.planSection}>
-            <View style={styles.planHeader}>
-              <Text style={styles.planIcon}>👑</Text>
-              <Text style={styles.planTitle}>Let&apos;s go Premium!</Text>
-            </View>
-            <Text style={styles.planDescription}>Feature you will gets</Text>
-            <Text style={styles.planFeatures}>• Unlimited AI Chat • AI Based Financial advice</Text>
+          {userProfile.status === 'free' && (
+            <View style={styles.planSection}>
+              <View style={styles.planHeader}>
+                <Text style={styles.planIcon}>👑</Text>
+                <Text style={styles.planTitle}>Let&apos;s go Premium!</Text>
+              </View>
+              <Text style={styles.planDescription}>Feature you will gets</Text>
+              <Text style={styles.planFeatures}>
+                • Unlimited AI Chat • AI Based Financial advice
+              </Text>
 
-            <TouchableOpacity style={styles.upgradeButton} onPress={handleUpgradePlan}>
-              <Text style={styles.upgradeButtonText}>Upgrade to Premium</Text>
-            </TouchableOpacity>
-          </View>
+              <TouchableOpacity style={styles.upgradeButton} onPress={handleUpgradePlan}>
+                <Text style={styles.upgradeButtonText}>Upgrade to Premium</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
         <View style={styles.statsSection}>
