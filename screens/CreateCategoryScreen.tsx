@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Pressable, Modal, FlatList, Alert, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
+import * as securestore from 'expo-secure-store';
 const BASE_URL = 'https://ssa-server-omega.vercel.app';
-const access_token =
-  'eyJhbGciOiJIUzI1NiJ9.eyJfaWQiOiI2ODg0ZjA0NGJlNWY2NGQwMDI0MzIyNjYifQ.z7DO3TL-SXjRw0nAw0lno6VR3Q04pcRaJJECHu0HcV0';
 
 const TYPES = ['income', 'expense', 'debt', 'loan'];
 
@@ -15,6 +13,7 @@ export default function CreateCategoryScreen() {
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
+    const access_token = await securestore.getItemAsync('access_token');
     if (!name.trim()) {
       Alert.alert('Validation Error', 'Category name is required.');
       return;

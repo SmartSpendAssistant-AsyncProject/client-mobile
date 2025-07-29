@@ -12,6 +12,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { RootStackNavigationProp } from 'types/navigation';
 import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react-native';
+import * as securestore from 'expo-secure-store';
 
 // Interface for wallet type options
 interface WalletTypeOption {
@@ -63,8 +64,7 @@ export default function CreateWalletScreen() {
       };
 
       // Use the same token format as WalletsScreen
-      const token =
-        'eyJhbGciOiJIUzI1NiJ9.eyJfaWQiOiI2ODg4NmQ1MGU2MDM5YmI4NjkxZTA2OGMifQ.kDNJxvL84nLV5z-l-d_8V9mu-GuFuFOkzSBUjPB4h9A';
+      const token = await securestore.getItemAsync('access_token');
 
       const response = await fetch('https://ssa-server-omega.vercel.app/api/wallets', {
         method: 'POST',

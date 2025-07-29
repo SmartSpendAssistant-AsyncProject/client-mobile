@@ -544,7 +544,7 @@ export default function HomeScreen() {
                       <Text
                         style={[
                           styles.transactionAmount,
-                          transaction.type === 'income'
+                          transaction.type === 'income' || transaction.type === 'debt'
                             ? styles.incomeAmount
                             : styles.expenseAmount,
                         ]}>
