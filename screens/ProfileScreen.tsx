@@ -57,10 +57,11 @@ export default function ProfileScreen() {
   //   Upgrade Plan Handler
   // Line 11: Handle plan upgrade navigation
   const handleUpgradePlan = async () => {
+    const access_token = await SecureStore.getItemAsync('access_token');
     const response = await fetch('https://ssa-server-omega.vercel.app/api/payments', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${'eyJhbGciOiJIUzI1NiJ9.eyJfaWQiOiI2ODgyNDhmYjc2NTM3ZGQ0ZjZjYzllMDkifQ.Wg9sGQZ4Go_rLGXtwiJPUshoee5wW1GjELrzwiLU850'}`,
+        Authorization: `Bearer ${access_token}`,
       },
     });
 
