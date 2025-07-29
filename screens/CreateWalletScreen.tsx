@@ -7,7 +7,8 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
-  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { RootStackNavigationProp } from 'types/navigation';
@@ -27,7 +28,9 @@ export default function CreateWalletScreen() {
   // Form state management
   const [walletName, setWalletName] = useState('');
   const [walletType, setWalletType] = useState('Cash');
-  const [initialBalance, setInitialBalance] = useState('0');
+  const [initialBalance, setInitialBalance] = useState('');
+  const [walletThreshold, setWalletThreshold] = useState('');
+  const [savingTarget, setSavingTarget] = useState('');
   const [description, setDescription] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -59,8 +62,8 @@ export default function CreateWalletScreen() {
         description: description.trim(),
         type: walletType,
         balance: Number(initialBalance),
-        target: 0, // Default target
-        threshold: 0, // Default threshold
+        target: Number(savingTarget),
+        threshold: Number(walletThreshold),
       };
 
       // Use the same token format as WalletsScreen
@@ -97,11 +100,11 @@ export default function CreateWalletScreen() {
   };
 
   // Format number input for balance
-  const formatBalance = (text: string): void => {
-    // Remove non-numeric characters except dots
-    const numericValue = text.replace(/[^0-9]/g, '');
-    setInitialBalance(numericValue);
-  };
+  // const formatBalance = (text: string): void => {
+  //   // Remove non-numeric characters except dots
+  //   const numericValue = text.replace(/[^0-9]/g, '');
+  //   setInitialBalance(numericValue);
+  // };
 
   // Handle wallet type selection
   const selectWalletType = (type: string): void => {
@@ -110,132 +113,170 @@ export default function CreateWalletScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <ArrowLeft size={24} color="white" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Create Wallet</Text>
-        <View style={styles.headerSpacer} />
-      </View>
-
-      {/* Form Content */}
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Wallet Name */}
-        <View style={styles.formGroup}>
-          <Text style={styles.label}>Wallet Name</Text>
-          <TextInput
-            style={styles.textInput}
-            placeholder="Enter wallet name"
-            placeholderTextColor="#A0A0A0"
-            value={walletName}
-            onChangeText={setWalletName}
-          />
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <View style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <ArrowLeft size={24} color="white" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Create Wallet</Text>
+          <View style={styles.headerSpacer} />
         </View>
 
-        {/* Wallet Type */}
-        <View style={styles.formGroup}>
-          <Text style={styles.label}>Wallet Type</Text>
-          <View style={styles.dropdownContainer}>
-            <TouchableOpacity
-              style={styles.typeSelector}
-              onPress={() => setIsDropdownOpen(!isDropdownOpen)}>
-              <View style={styles.typeSelectorContent}>
-                <View>
-                  <Text style={styles.typeTitle}>{walletType}</Text>
-                  <Text style={styles.typeSubtitle}>
-                    {walletTypes.find((type) => type.value === walletType)?.subtitle}
-                  </Text>
-                </View>
-                {isDropdownOpen ? (
-                  <ChevronUp size={20} color="#666" />
-                ) : (
-                  <ChevronDown size={20} color="#666" />
-                )}
-              </View>
-            </TouchableOpacity>
-
-            {/* Dropdown Options */}
-            {isDropdownOpen && (
-              <View style={styles.dropdownOptions}>
-                {walletTypes.map((type) => (
-                  <TouchableOpacity
-                    key={type.value}
-                    style={[
-                      styles.dropdownOption,
-                      walletType === type.value && styles.selectedDropdownOption,
-                    ]}
-                    onPress={() => selectWalletType(type.value)}>
-                    <View>
-                      <Text
-                        style={[
-                          styles.dropdownOptionTitle,
-                          walletType === type.value && styles.selectedDropdownText,
-                        ]}>
-                        {type.label}
-                      </Text>
-                      <Text
-                        style={[
-                          styles.dropdownOptionSubtitle,
-                          walletType === type.value && styles.selectedDropdownSubtext,
-                        ]}>
-                        {type.subtitle}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-          </View>
-        </View>
-
-        {/* Initial Balance */}
-        <View style={styles.formGroup}>
-          <Text style={styles.label}>Initial Balance</Text>
-          <View style={styles.balanceContainer}>
-            <Text style={styles.currencyPrefix}>Rp.</Text>
+        {/* Form Content */}
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {/* Wallet Name */}
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Wallet Name</Text>
             <TextInput
-              style={styles.balanceInput}
-              placeholder="0"
+              style={styles.textInput}
+              placeholder="Enter wallet name"
               placeholderTextColor="#A0A0A0"
-              value={initialBalance}
-              onChangeText={formatBalance}
-              keyboardType="numeric"
+              value={walletName}
+              onChangeText={setWalletName}
             />
           </View>
-        </View>
 
-        {/* Description */}
-        <View style={styles.formGroup}>
-          <Text style={styles.label}>Description (Optional)</Text>
-          <TextInput
-            style={[styles.textInput, styles.descriptionInput]}
-            placeholder="Add a description for this wallet"
-            placeholderTextColor="#A0A0A0"
-            value={description}
-            onChangeText={setDescription}
-            multiline
-            numberOfLines={4}
-            textAlignVertical="top"
-          />
-        </View>
-      </ScrollView>
+          {/* Wallet Type */}
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Wallet Type</Text>
+            <View style={styles.dropdownContainer}>
+              <TouchableOpacity
+                style={styles.typeSelector}
+                onPress={() => setIsDropdownOpen(!isDropdownOpen)}>
+                <View style={styles.typeSelectorContent}>
+                  <View>
+                    <Text style={styles.typeTitle}>{walletType}</Text>
+                    <Text style={styles.typeSubtitle}>
+                      {walletTypes.find((type) => type.value === walletType)?.subtitle}
+                    </Text>
+                  </View>
+                  {isDropdownOpen ? (
+                    <ChevronUp size={20} color="#666" />
+                  ) : (
+                    <ChevronDown size={20} color="#666" />
+                  )}
+                </View>
+              </TouchableOpacity>
 
-      {/* Create Button */}
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={[styles.createButton, isCreating && styles.createButtonDisabled]}
-          onPress={handleCreateWallet}
-          disabled={isCreating}>
-          {isCreating ? (
-            <Text style={styles.createButtonText}>Creating...</Text>
-          ) : (
-            <Text style={styles.createButtonText}>Create Wallet</Text>
+              {/* Dropdown Options */}
+              {isDropdownOpen && (
+                <View style={styles.dropdownOptions}>
+                  {walletTypes.map((type) => (
+                    <TouchableOpacity
+                      key={type.value}
+                      style={[
+                        styles.dropdownOption,
+                        walletType === type.value && styles.selectedDropdownOption,
+                      ]}
+                      onPress={() => selectWalletType(type.value)}>
+                      <View>
+                        <Text
+                          style={[
+                            styles.dropdownOptionTitle,
+                            walletType === type.value && styles.selectedDropdownText,
+                          ]}>
+                          {type.label}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.dropdownOptionSubtitle,
+                            walletType === type.value && styles.selectedDropdownSubtext,
+                          ]}>
+                          {type.subtitle}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </View>
+          </View>
+
+          {/* Initial Balance */}
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Initial Balance</Text>
+            <View style={styles.balanceContainer}>
+              <Text style={styles.currencyPrefix}>Rp.</Text>
+              <TextInput
+                style={styles.balanceInput}
+                placeholder="0"
+                placeholderTextColor="#A0A0A0"
+                value={initialBalance}
+                onChangeText={setInitialBalance}
+                keyboardType="numeric"
+              />
+            </View>
+          </View>
+
+          {/* Wallet Threshold */}
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Wallet Threshold</Text>
+            <View style={styles.balanceContainer}>
+              <Text style={styles.currencyPrefix}>Rp.</Text>
+              <TextInput
+                style={styles.balanceInput}
+                placeholder="0"
+                placeholderTextColor="#A0A0A0"
+                value={walletThreshold}
+                onChangeText={setWalletThreshold}
+                keyboardType="numeric"
+              />
+            </View>
+          </View>
+
+          {/* Saving target */}
+          {walletType === 'Saving' && (
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Saving Target</Text>
+              <View style={styles.balanceContainer}>
+                <Text style={styles.currencyPrefix}>Rp.</Text>
+                <TextInput
+                  style={styles.balanceInput}
+                  placeholder="0"
+                  placeholderTextColor="#A0A0A0"
+                  value={savingTarget}
+                  onChangeText={setSavingTarget}
+                  keyboardType="numeric"
+                />
+              </View>
+            </View>
           )}
-        </TouchableOpacity>
+
+          {/* Description */}
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Description (Optional)</Text>
+            <TextInput
+              style={[styles.textInput, styles.descriptionInput]}
+              placeholder="Add a description for this wallet"
+              placeholderTextColor="#A0A0A0"
+              value={description}
+              onChangeText={setDescription}
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+            />
+          </View>
+        </ScrollView>
+
+        {/* Create Button */}
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={[styles.createButton, isCreating && styles.createButtonDisabled]}
+            onPress={handleCreateWallet}
+            disabled={isCreating}>
+            {isCreating ? (
+              <Text style={styles.createButtonText}>Creating...</Text>
+            ) : (
+              <Text style={styles.createButtonText}>Create Wallet</Text>
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

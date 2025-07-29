@@ -9,6 +9,7 @@ import {
   Alert,
   Platform,
   ActivityIndicator,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
@@ -308,180 +309,187 @@ export default function CreateScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      {/*   Header section with title */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Add Transaction</Text>
-      </View>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <SafeAreaView style={styles.container} edges={['top']}>
+        {/*   Header section with title */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Add Transaction</Text>
+        </View>
 
-      {/*   Main form content with scroll */}
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.formContainer}>
-          {/*   Name input field */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Transaction Name</Text>
-            <TextInput
-              style={styles.textInput}
-              value={name}
-              onChangeText={(value) => setName(value)}
-              placeholder="Enter name"
-              placeholderTextColor="#D1D5DB"
-            />
-          </View>
-          {/*   Amount input field */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Amount</Text>
-            <View style={styles.amountInputContainer}>
-              <Text style={styles.currencyPrefix}>Rp.</Text>
+        {/*   Main form content with scroll */}
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          <View style={styles.formContainer}>
+            {/*   Name input field */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Transaction Name</Text>
               <TextInput
-                style={styles.amountInput}
-                value={ammount.toString()}
-                onChangeText={(value) => setAmmount(Number(value))}
-                placeholder="0"
-                placeholderTextColor="#9CA3AF"
-                keyboardType="numeric"
+                style={styles.textInput}
+                value={name}
+                onChangeText={(value) => setName(value)}
+                placeholder="Enter name"
+                placeholderTextColor="#D1D5DB"
               />
             </View>
-          </View>
+            {/*   Amount input field */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Amount</Text>
+              <View style={styles.amountInputContainer}>
+                <Text style={styles.currencyPrefix}>Rp.</Text>
+                <TextInput
+                  style={styles.amountInput}
+                  value={ammount.toString()}
+                  onChangeText={(value) => setAmmount(Number(value))}
+                  placeholder="0"
+                  placeholderTextColor="#9CA3AF"
+                  keyboardType="numeric"
+                />
+              </View>
+            </View>
 
-          {/*   Description input field */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Description</Text>
-            <TextInput
-              style={styles.textInput}
-              value={description}
-              onChangeText={(value) => setDescription(value)}
-              placeholder="Enter description"
-              placeholderTextColor="#D1D5DB"
-            />
-          </View>
-
-          {/*   Date input field with calendar icon */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Date</Text>
-            <TouchableOpacity
-              style={styles.dateInputContainer}
-              onPress={() => setShowDatePicker(true)}>
-              <Text style={styles.dateInputText}>{formatDateForDisplay(date)}</Text>
-              <Calendar size={20} color="#9CA3AF" style={styles.calendarIcon} />
-            </TouchableOpacity>
-          </View>
-
-          {/* Date Picker Modal */}
-          {showDatePicker && (
-            <DateTimePicker
-              testID="dateTimePicker"
-              value={selectedDate}
-              mode="date"
-              is24Hour={true}
-              display="default"
-              onChange={onDateChange}
-            />
-          )}
-
-          {/*   Transaction Type selector field */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Transaction Type</Text>
-            <TouchableOpacity
-              style={styles.selectInput}
-              onPress={() => {
-                setShowTypeDropdown(!showTypeDropdown);
-                setShowCategoryDropdown(false);
-                setShowWalletDropdown(false);
-              }}>
-              <Text
-                style={[
-                  styles.selectText,
-                  transactionType ? styles.selectedText : styles.placeholderText,
-                ]}>
-                {transactionType === 'income' ? 'Income' : 'Expense'}
-              </Text>
-              <ChevronDown
-                size={20}
-                color="#9CA3AF"
-                style={[styles.chevronIcon, showTypeDropdown && styles.chevronRotated]}
+            {/*   Description input field */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Description</Text>
+              <TextInput
+                style={styles.textInput}
+                value={description}
+                onChangeText={(value) => setDescription(value)}
+                placeholder="Enter description"
+                placeholderTextColor="#D1D5DB"
               />
-            </TouchableOpacity>
-            {/*   Transaction type dropdown options */}
-            {renderTypeDropdown(showTypeDropdown, handleTypeSelect)}
-          </View>
+            </View>
 
-          {/*   Category selector field with dropdown */}
-          <View style={styles.inputGroup}>
-            <View style={styles.labelWithButton}>
-              <Text style={styles.inputLabel}>Category</Text>
-              <TouchableOpacity style={styles.addCategoryButton} onPress={handleAddCategory}>
-                <Plus size={16} color="#3b667c" />
-                <Text style={styles.addCategoryButtonText}>Add</Text>
+            {/*   Date input field with calendar icon */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Date</Text>
+              <TouchableOpacity
+                style={styles.dateInputContainer}
+                onPress={() => setShowDatePicker(true)}>
+                <Text style={styles.dateInputText}>{formatDateForDisplay(date)}</Text>
+                <Calendar size={20} color="#9CA3AF" style={styles.calendarIcon} />
               </TouchableOpacity>
             </View>
-            <TouchableOpacity
-              style={styles.selectInput}
-              onPress={() => {
-                setShowCategoryDropdown(!showCategoryDropdown);
-                setShowWalletDropdown(false); // Close other dropdown
-                setShowTypeDropdown(false); // Close type dropdown
-              }}>
-              <Text
-                style={[
-                  styles.selectText,
-                  category ? styles.selectedText : styles.placeholderText,
-                ]}>
-                {category || `Select ${transactionType} category`}
-              </Text>
-              <ChevronDown
-                size={20}
-                color="#9CA3AF"
-                style={[styles.chevronIcon, showCategoryDropdown && styles.chevronRotated]}
-              />
-            </TouchableOpacity>
-            {/*   Category dropdown options - filtered by transaction type */}
-            {renderDropdown(showCategoryDropdown, getCurrentCategories(), handleCategorySelect)}
-          </View>
 
-          {/*   Wallet selector field with dropdown */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Wallet</Text>
-            <TouchableOpacity
-              style={styles.selectInput}
-              onPress={() => {
-                setShowWalletDropdown(!showWalletDropdown);
-                setShowCategoryDropdown(false); // Close category dropdown
-                setShowTypeDropdown(false); // Close type dropdown
-              }}>
-              <Text
-                style={[styles.selectText, wallet ? styles.selectedText : styles.placeholderText]}>
-                {wallet || 'Select wallet'}
-              </Text>
-              <ChevronDown
-                size={20}
-                color="#9CA3AF"
-                style={[styles.chevronIcon, showWalletDropdown && styles.chevronRotated]}
+            {/* Date Picker Modal */}
+            {showDatePicker && (
+              <DateTimePicker
+                testID="dateTimePicker"
+                value={selectedDate}
+                mode="date"
+                is24Hour={true}
+                display="default"
+                onChange={onDateChange}
               />
-            </TouchableOpacity>
-            {/*   Wallet dropdown options */}
-            {renderDropdown(showWalletDropdown, wallets, handleWalletSelect)}
-          </View>
+            )}
 
-          {/*   Add transaction submit button */}
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[styles.addButton, isLoading && styles.addButtonDisabled]}
-              onPress={handleAddTransaction}
-              disabled={isLoading}>
-              {isLoading ? (
-                <View style={styles.loadingContainer}>
-                  <ActivityIndicator size="small" color="#FFFFFF" />
-                  <Text style={styles.addButtonText}>Saving...</Text>
-                </View>
-              ) : (
-                <Text style={styles.addButtonText}>Add Transaction</Text>
-              )}
-            </TouchableOpacity>
+            {/*   Transaction Type selector field */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Transaction Type</Text>
+              <TouchableOpacity
+                style={styles.selectInput}
+                onPress={() => {
+                  setShowTypeDropdown(!showTypeDropdown);
+                  setShowCategoryDropdown(false);
+                  setShowWalletDropdown(false);
+                }}>
+                <Text
+                  style={[
+                    styles.selectText,
+                    transactionType ? styles.selectedText : styles.placeholderText,
+                  ]}>
+                  {transactionType === 'income' ? 'Income' : 'Expense'}
+                </Text>
+                <ChevronDown
+                  size={20}
+                  color="#9CA3AF"
+                  style={[styles.chevronIcon, showTypeDropdown && styles.chevronRotated]}
+                />
+              </TouchableOpacity>
+              {/*   Transaction type dropdown options */}
+              {renderTypeDropdown(showTypeDropdown, handleTypeSelect)}
+            </View>
+
+            {/*   Category selector field with dropdown */}
+            <View style={styles.inputGroup}>
+              <View style={styles.labelWithButton}>
+                <Text style={styles.inputLabel}>Category</Text>
+                <TouchableOpacity style={styles.addCategoryButton} onPress={handleAddCategory}>
+                  <Plus size={16} color="#3b667c" />
+                  <Text style={styles.addCategoryButtonText}>Add</Text>
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity
+                style={styles.selectInput}
+                onPress={() => {
+                  setShowCategoryDropdown(!showCategoryDropdown);
+                  setShowWalletDropdown(false); // Close other dropdown
+                  setShowTypeDropdown(false); // Close type dropdown
+                }}>
+                <Text
+                  style={[
+                    styles.selectText,
+                    category ? styles.selectedText : styles.placeholderText,
+                  ]}>
+                  {category || `Select ${transactionType} category`}
+                </Text>
+                <ChevronDown
+                  size={20}
+                  color="#9CA3AF"
+                  style={[styles.chevronIcon, showCategoryDropdown && styles.chevronRotated]}
+                />
+              </TouchableOpacity>
+              {/*   Category dropdown options - filtered by transaction type */}
+              {renderDropdown(showCategoryDropdown, getCurrentCategories(), handleCategorySelect)}
+            </View>
+
+            {/*   Wallet selector field with dropdown */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Wallet</Text>
+              <TouchableOpacity
+                style={styles.selectInput}
+                onPress={() => {
+                  setShowWalletDropdown(!showWalletDropdown);
+                  setShowCategoryDropdown(false); // Close category dropdown
+                  setShowTypeDropdown(false); // Close type dropdown
+                }}>
+                <Text
+                  style={[
+                    styles.selectText,
+                    wallet ? styles.selectedText : styles.placeholderText,
+                  ]}>
+                  {wallet || 'Select wallet'}
+                </Text>
+                <ChevronDown
+                  size={20}
+                  color="#9CA3AF"
+                  style={[styles.chevronIcon, showWalletDropdown && styles.chevronRotated]}
+                />
+              </TouchableOpacity>
+              {/*   Wallet dropdown options */}
+              {renderDropdown(showWalletDropdown, wallets, handleWalletSelect)}
+            </View>
+
+            {/*   Add transaction submit button */}
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={[styles.addButton, isLoading && styles.addButtonDisabled]}
+                onPress={handleAddTransaction}
+                disabled={isLoading}>
+                {isLoading ? (
+                  <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                    <Text style={styles.addButtonText}>Saving...</Text>
+                  </View>
+                ) : (
+                  <Text style={styles.addButtonText}>Add Transaction</Text>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+        </ScrollView>
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
 
