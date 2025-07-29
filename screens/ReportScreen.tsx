@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import * as SecureStore from 'expo-secure-store';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { RootStackNavigationProp } from '../types/navigation';
 import { VictoryPie, VictoryLabel } from 'victory-native';
 import {
@@ -142,6 +142,7 @@ export default function ReportScreen() {
   const [transactions, setTransactions] = useState<ReportItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'transactions' | 'reports'>('transactions');
 
   // Summary data states
   const [summaryData, setSummaryData] = useState<SummaryData>({
@@ -276,6 +277,13 @@ export default function ReportScreen() {
     fetchTransactions(selectedMonth);
   }, [selectedMonth, fetchTransactions]);
 
+  // Refresh data when screen comes into focus or when switching tabs
+  useFocusEffect(
+    useCallback(() => {
+      fetchTransactions(selectedMonth);
+    }, [selectedMonth, fetchTransactions])
+  );
+
   const handleMonthChange = (month: string) => {
     setSelectedMonth(month);
   };
@@ -395,6 +403,54 @@ export default function ReportScreen() {
     );
   };
 
+  const renderTabContent = () => {
+    if (activeTab === 'transactions') {
+      return (
+        <View style={styles.transactionsSection}>
+          <Text style={styles.sectionTitle}>Transactions</Text>
+          {renderContent()}
+        </View>
+      );
+    } else {
+      return (
+        <View style={styles.chartsSection}>
+          <Text style={styles.sectionTitle}>Category Breakdown</Text>
+          <View style={styles.chartsRow}>
+            {renderPieChart(incomePieData, 'Income', summaryData.income)}
+            {renderPieChart(expensePieData, 'Expense', summaryData.expense)}
+          </View>
+
+          {/* Net Income Summary */}
+          <View style={styles.summaryCard}>
+            <Text style={styles.summaryTitle}>Monthly Summary</Text>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Total Income:</Text>
+              <Text style={[styles.summaryValue, styles.income]}>
+                Rp. {summaryData.income.toLocaleString('id-ID')}
+              </Text>
+            </View>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Total Expense:</Text>
+              <Text style={[styles.summaryValue, styles.expense]}>
+                Rp. {summaryData.expense.toLocaleString('id-ID')}
+              </Text>
+            </View>
+            <View style={[styles.summaryRow, styles.netIncomeRow]}>
+              <Text style={styles.summaryLabel}>Net Income:</Text>
+              <Text
+                style={[
+                  styles.summaryValue,
+                  summaryData.netIncome >= 0 ? styles.income : styles.expense,
+                ]}>
+                Rp. {summaryData.netIncome.toLocaleString('id-ID')}
+              </Text>
+            </View>
+          </View>
+        </View>
+      );
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -413,49 +469,26 @@ export default function ReportScreen() {
           />
         </View>
 
-        {/* Pie Charts Section */}
-        {!loading && !error && (
-          <View style={styles.chartsSection}>
-            <Text style={styles.sectionTitle}>Category Breakdown</Text>
-            <View style={styles.chartsRow}>
-              {renderPieChart(incomePieData, 'Income', summaryData.income)}
-              {renderPieChart(expensePieData, 'Expense', summaryData.expense)}
-            </View>
-
-            {/* Net Income Summary */}
-            <View style={styles.summaryCard}>
-              <Text style={styles.summaryTitle}>Monthly Summary</Text>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Total Income:</Text>
-                <Text style={[styles.summaryValue, styles.income]}>
-                  Rp. {summaryData.income.toLocaleString('id-ID')}
-                </Text>
-              </View>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Total Expense:</Text>
-                <Text style={[styles.summaryValue, styles.expense]}>
-                  Rp. {summaryData.expense.toLocaleString('id-ID')}
-                </Text>
-              </View>
-              <View style={[styles.summaryRow, styles.netIncomeRow]}>
-                <Text style={styles.summaryLabel}>Net Income:</Text>
-                <Text
-                  style={[
-                    styles.summaryValue,
-                    summaryData.netIncome >= 0 ? styles.income : styles.expense,
-                  ]}>
-                  Rp. {summaryData.netIncome.toLocaleString('id-ID')}
-                </Text>
-              </View>
-            </View>
-          </View>
-        )}
-
-        {/* Transactions List Section */}
-        <View style={styles.transactionsSection}>
-          <Text style={styles.sectionTitle}>Transactions</Text>
-          {renderContent()}
+        {/* Tab Navigation */}
+        <View style={styles.tabContainer}>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'transactions' && styles.activeTab]}
+            onPress={() => setActiveTab('transactions')}>
+            <Text style={[styles.tabText, activeTab === 'transactions' && styles.activeTabText]}>
+              Transactions
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'reports' && styles.activeTab]}
+            onPress={() => setActiveTab('reports')}>
+            <Text style={[styles.tabText, activeTab === 'reports' && styles.activeTabText]}>
+              Reports
+            </Text>
+          </TouchableOpacity>
         </View>
+
+        {/* Tab Content */}
+        {!loading && !error && renderTabContent()}
       </ScrollView>
     </View>
   );
@@ -696,5 +729,39 @@ const styles = StyleSheet.create({
   },
   transactionsSection: {
     flex: 1,
+  },
+
+  // Tab styles
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
+    marginBottom: 16,
+    padding: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activeTab: {
+    backgroundColor: '#3b667c',
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#64748b',
+  },
+  activeTabText: {
+    color: '#ffffff',
+    fontWeight: 'bold',
   },
 });
