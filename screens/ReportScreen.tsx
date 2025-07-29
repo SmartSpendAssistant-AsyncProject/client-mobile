@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import * as SecureStore from 'expo-secure-store';
 import {
   View,
   Text,
@@ -86,6 +87,13 @@ type ReportItem = {
 
 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+// Helper function to get current month abbreviation
+const getCurrentMonth = (): string => {
+  const currentDate = new Date();
+  const currentMonthIndex = currentDate.getMonth();
+  return months[currentMonthIndex];
+};
+
 // Helper function to convert month name to month number
 const getMonthNumber = (monthName: string): string => {
   const monthIndex = months.indexOf(monthName) + 1;
@@ -107,23 +115,22 @@ const transformTransactionToReportItem = (transaction: Transaction): ReportItem 
     id: transaction._id,
     title: transaction.name,
     category: transaction.category.name,
-    date: new Date(transaction.date).toISOString().split('T')[0], // Format: YYYY-MM-DD
+    date: new Date(transaction.date).toISOString().split('T')[0],
     amount: transaction.ammount,
     type: type,
   };
 };
 
 export default function ReportScreen() {
-  const [selectedMonth, setSelectedMonth] = useState('Jul'); // Default to current month
+  const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
   const [transactions, setTransactions] = useState<ReportItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const BASE_URL = process.env.BASE_URL || 'https://ssa-server-omega.vercel.app';
-  const access_token =
-    'eyJhbGciOiJIUzI1NiJ9.eyJfaWQiOiI2ODgyNDhmYjc2NTM3ZGQ0ZjZjYzllMDkifQ.Wg9sGQZ4Go_rLGXtwiJPUshoee5wW1GjELrzwiLU850';
 
   const fetchTransactions = async (month: string) => {
+    const access_token = await SecureStore.getItemAsync('access_token');
     setLoading(true);
     setError(null);
 
@@ -168,8 +175,8 @@ export default function ReportScreen() {
     <View style={styles.listItem}>
       <View style={styles.transactionRow}>
         <View style={styles.transactionInfo}>
-          <Text style={styles.title}>{item.title}</Text>
-          <Text style={styles.category}>{item.category}</Text>
+          <Text style={styles.title}>{item.category}</Text>
+          <Text style={styles.category}>{item.title}</Text>
           <Text style={styles.date}>{item.date}</Text>
         </View>
         <Text style={[styles.amount, item.type === 'income' ? styles.income : styles.expense]}>
