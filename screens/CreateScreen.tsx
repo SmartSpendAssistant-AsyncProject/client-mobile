@@ -63,7 +63,6 @@ export default function CreateScreen() {
   const [showWalletDropdown, setShowWalletDropdown] = useState(false);
   const [showTypeDropdown, setShowTypeDropdown] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   const isFocused = useIsFocused();
 
@@ -111,7 +110,6 @@ export default function CreateScreen() {
       }
     };
     const fetchInitialData = async () => {
-      setIsInitialLoading(true);
       try {
         const token = await SecureStore.getItemAsync('access_token');
         if (token) {
@@ -122,8 +120,6 @@ export default function CreateScreen() {
       } catch (error) {
         console.error('Error fetching initial data:', error);
         Alert.alert('Error', 'Failed to load data. Please try again.');
-      } finally {
-        setIsInitialLoading(false);
       }
     };
     if (isFocused) {
@@ -330,7 +326,6 @@ export default function CreateScreen() {
               onChangeText={(value) => setName(value)}
               placeholder="Enter name"
               placeholderTextColor="#D1D5DB"
-              editable={!isInitialLoading}
             />
           </View>
           {/*   Amount input field */}
@@ -345,7 +340,6 @@ export default function CreateScreen() {
                 placeholder="0"
                 placeholderTextColor="#9CA3AF"
                 keyboardType="numeric"
-                editable={!isInitialLoading}
               />
             </View>
           </View>
@@ -359,7 +353,6 @@ export default function CreateScreen() {
               onChangeText={(value) => setDescription(value)}
               placeholder="Enter description"
               placeholderTextColor="#D1D5DB"
-              editable={!isInitialLoading}
             />
           </View>
 
@@ -488,16 +481,6 @@ export default function CreateScreen() {
           </View>
         </View>
       </ScrollView>
-
-      {/* Initial Loading Overlay */}
-      {isInitialLoading && (
-        <View style={styles.loadingOverlay}>
-          <View style={styles.loadingContent}>
-            <ActivityIndicator size="large" color="#3b667c" />
-            <Text style={styles.loadingText}>Loading data...</Text>
-          </View>
-        </View>
-      )}
     </SafeAreaView>
   );
 }

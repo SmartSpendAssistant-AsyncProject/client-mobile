@@ -70,7 +70,6 @@ export default function UpdateScreen() {
   const [showWalletDropdown, setShowWalletDropdown] = useState(false);
   const [showTypeDropdown, setShowTypeDropdown] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   const isFocused = useIsFocused();
 
@@ -152,7 +151,6 @@ export default function UpdateScreen() {
     };
 
     const fetchInitialData = async () => {
-      setIsInitialLoading(true);
       try {
         const token = await SecureStore.getItemAsync('access_token');
         if (token) {
@@ -166,8 +164,6 @@ export default function UpdateScreen() {
       } catch (error) {
         console.error('Error fetching initial data:', error);
         Alert.alert('Error', 'Failed to load data. Please try again.');
-      } finally {
-        setIsInitialLoading(false);
       }
     };
 
@@ -383,7 +379,6 @@ export default function UpdateScreen() {
               onChangeText={(value) => setName(value)}
               placeholder="Enter name"
               placeholderTextColor="#D1D5DB"
-              editable={!isInitialLoading}
             />
           </View>
           {/*   Amount input field */}
@@ -398,7 +393,6 @@ export default function UpdateScreen() {
                 placeholder="0"
                 placeholderTextColor="#9CA3AF"
                 keyboardType="numeric"
-                editable={!isInitialLoading}
               />
             </View>
           </View>
@@ -412,7 +406,6 @@ export default function UpdateScreen() {
               onChangeText={(value) => setDescription(value)}
               placeholder="Enter description"
               placeholderTextColor="#D1D5DB"
-              editable={!isInitialLoading}
             />
           </View>
 
@@ -425,8 +418,7 @@ export default function UpdateScreen() {
                 setShowTypeDropdown(!showTypeDropdown);
                 setShowCategoryDropdown(false);
                 setShowWalletDropdown(false);
-              }}
-              disabled={isInitialLoading}>
+              }}>
               <Text
                 style={[
                   styles.selectText,
@@ -482,8 +474,7 @@ export default function UpdateScreen() {
                 setShowCategoryDropdown(!showCategoryDropdown);
                 setShowWalletDropdown(false); // Close other dropdown
                 setShowTypeDropdown(false); // Close type dropdown
-              }}
-              disabled={isInitialLoading}>
+              }}>
               <Text
                 style={[
                   styles.selectText,
@@ -510,8 +501,7 @@ export default function UpdateScreen() {
                 setShowWalletDropdown(!showWalletDropdown);
                 setShowCategoryDropdown(false); // Close category dropdown
                 setShowTypeDropdown(false); // Close type dropdown
-              }}
-              disabled={isInitialLoading}>
+              }}>
               <Text
                 style={[
                   styles.selectText,
@@ -534,7 +524,7 @@ export default function UpdateScreen() {
             <TouchableOpacity
               style={[styles.addButton, isLoading && styles.addButtonDisabled]}
               onPress={handleUpdateTransaction}
-              disabled={isLoading || isInitialLoading}>
+              disabled={isLoading}>
               {isLoading ? (
                 <View style={styles.loadingContainer}>
                   <ActivityIndicator size="small" color="#FFFFFF" />
@@ -547,16 +537,6 @@ export default function UpdateScreen() {
           </View>
         </View>
       </ScrollView>
-
-      {/* Initial Loading Overlay */}
-      {isInitialLoading && (
-        <View style={styles.loadingOverlay}>
-          <View style={styles.loadingContent}>
-            <ActivityIndicator size="large" color="#3b667c" />
-            <Text style={styles.loadingText}>Loading transaction data...</Text>
-          </View>
-        </View>
-      )}
     </SafeAreaView>
   );
 }
