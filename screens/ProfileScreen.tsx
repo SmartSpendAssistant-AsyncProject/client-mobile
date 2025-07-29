@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,45 +7,71 @@ import {
   SafeAreaView,
   ScrollView,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { RootStackNavigationProp } from '../types/navigation';
 import * as SecureStore from 'expo-secure-store';
 
+interface Wallet {
+  _id: string;
+  name: string;
+}
+
+interface Transaction {
+  _id: string;
+  name: string;
+  description: string;
+  ammount: number;
+}
+
 export default function ProfileScreen() {
-  // ALGORITMANYA: Navigation and State Management
-  // Line 1: Initialize navigation hook for screen transitions
   const navigation = useNavigation<RootStackNavigationProp>();
 
-  // Line 2-7: State management for user profile data
   const [userProfile, setUserProfile] = useState({
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    memberSince: 'January 2024',
-    planType: 'Free Plan',
-    walletCount: 3,
-    transactionCount: 127,
-    activeDebts: 2,
+    _id: '',
+    name: '',
+    username: '',
+    email: '',
+    createdAt: '',
+    updatedAt: '',
+    status: '',
   });
+  const [wallets, setWallets] = useState<Wallet[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
 
-  // Line 8: Loading state for database operations
   const [isLoading, setIsLoading] = useState(false);
 
-  //   Data Fetching Effect
-  // Line 9: Fetch user profile data on component mount
-  useEffect(() => {
-    fetchUserProfile();
-  }, []);
-
-  //   Database Integration Functions
-  // Line 10: Fetch user profile from database
   const fetchUserProfile = async () => {
+    const access_token = await SecureStore.getItemAsync('access_token');
     try {
       setIsLoading(true);
-      // TODO: Replace with actual API call
-      // const response = await api.getUserProfile();
-      // setUserProfile(response.data);
-      console.log('Fetching user profile from database...');
+      const response = await fetch('https://ssa-server-omega.vercel.app/api/profile', {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+        },
+      });
+      const data = await response.json();
+      setUserProfile(data);
+
+      const wallets = await fetch('https://ssa-server-omega.vercel.app/api/wallets', {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+        },
+      });
+      const walletsData = await wallets.json();
+      setWallets(walletsData);
+
+      const transactions = await fetch('https://ssa-server-omega.vercel.app/api/transactions', {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+        },
+      });
+      const transactionsData = await transactions.json();
+      setTransactions(transactionsData.data);
     } catch (error) {
       console.error('Error fetching user profile:', error);
       Alert.alert('Error', 'Failed to load profile data');
@@ -54,8 +80,6 @@ export default function ProfileScreen() {
     }
   };
 
-  //   Upgrade Plan Handler
-  // Line 11: Handle plan upgrade navigation
   const handleUpgradePlan = async () => {
     const access_token = await SecureStore.getItemAsync('access_token');
     const response = await fetch('https://ssa-server-omega.vercel.app/api/payments', {
@@ -71,16 +95,6 @@ export default function ProfileScreen() {
     }
   };
 
-  //   Edit Profile Handler
-  // Line 12: Navigate to edit profile screen
-  const handleEditProfile = () => {
-    // TODO: Navigate to edit profile screen
-    console.log('Navigating to edit profile...');
-    // navigation.navigate('EditProfile');
-  };
-
-  //   Sign Out Handler
-  // Line 13: Handle user logout with confirmation
   const handleSignOut = () => {
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
       {
@@ -109,82 +123,94 @@ export default function ProfileScreen() {
     ]);
   };
 
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchUserProfile();
+      return () => {
+        console.log('ProfileScreen focus effect cleanup');
+      };
+    }, [])
+  );
+
+  // Show loading screen when data is being fetched
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Profile</Text>
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#4a6b7c" />
+          <Text style={styles.loadingText}>Loading profile...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
-    //   Main Container Setup
-    // Line 14: SafeAreaView ensures content stays within device safe boundaries
     <SafeAreaView style={styles.container}>
-      {/*   Header Section */}
-      {/* Line 15: Fixed header with title */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Profile</Text>
       </View>
 
-      {/* Line 16: Scrollable content container */}
       <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-        {/*   Profile Information Section */}
-        {/* Line 17-19: User profile display with avatar and basic info */}
         <View style={styles.profileSection}>
           <View style={styles.profileHeader}>
             <View style={styles.avatarContainer}>
               <View style={styles.avatar}>
                 <Text style={styles.avatarIcon}>👤</Text>
               </View>
-              <View style={styles.cameraIcon}>
+              {/* <View style={styles.cameraIcon}>
                 <Text style={styles.cameraText}>📷</Text>
-              </View>
+              </View> */}
             </View>
 
             <View style={styles.profileInfo}>
               <View style={styles.nameRow}>
-                <Text style={styles.name}>{userProfile.name}</Text>
-                <TouchableOpacity onPress={handleEditProfile}>
+                <Text style={styles.name}>{userProfile.name || 'Loading...'}</Text>
+                {/* <TouchableOpacity onPress={handleEditProfile}>
                   <Text style={styles.editIcon}>✏️</Text>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
               </View>
-              <Text style={styles.email}>{userProfile.email}</Text>
-              <Text style={styles.memberSince}>Member since {userProfile.memberSince}</Text>
+              <Text style={styles.email}>{userProfile.email || 'Loading...'}</Text>
+              <Text style={styles.memberSince}>
+                Member since{' '}
+                {userProfile.createdAt
+                  ? `${String(new Date(userProfile.createdAt).getMonth() + 1).padStart(2, '0')}/${new Date(userProfile.createdAt).getFullYear()}`
+                  : 'Loading...'}
+              </Text>
             </View>
           </View>
 
-          {/*   Plan Information Section */}
-          {/* Line 20-22: Current plan display with upgrade option */}
-          <View style={styles.planSection}>
-            <View style={styles.planHeader}>
-              <Text style={styles.planIcon}>👑</Text>
-              <Text style={styles.planTitle}>{userProfile.planType}</Text>
-            </View>
-            <Text style={styles.planDescription}>Limited features available</Text>
-            <Text style={styles.planFeatures}>
-              • Up to 3 wallets • Basic reports • Limited AI chat
-            </Text>
+          {userProfile.status === 'free' && (
+            <View style={styles.planSection}>
+              <View style={styles.planHeader}>
+                <Text style={styles.planIcon}>👑</Text>
+                <Text style={styles.planTitle}>Let&apos;s go Premium!</Text>
+              </View>
+              <Text style={styles.planDescription}>Feature you will gets</Text>
+              <Text style={styles.planFeatures}>
+                • Unlimited AI Chat • AI Based Financial advice
+              </Text>
 
-            <TouchableOpacity style={styles.upgradeButton} onPress={handleUpgradePlan}>
-              <Text style={styles.upgradeButtonText}>Upgrade to Premium</Text>
-            </TouchableOpacity>
-          </View>
+              <TouchableOpacity style={styles.upgradeButton} onPress={handleUpgradePlan}>
+                <Text style={styles.upgradeButtonText}>Upgrade to Premium</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
-        {/*   Statistics Section */}
-        {/* Line 23-25: User statistics display with database-driven values */}
         <View style={styles.statsSection}>
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{userProfile.walletCount}</Text>
+            <Text style={styles.statNumber}>{wallets.length}</Text>
             <Text style={styles.statLabel}>Wallets</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={[styles.statNumber, styles.greenText]}>
-              {userProfile.transactionCount}
-            </Text>
+            <Text style={[styles.statNumber, styles.greenText]}>{transactions.length}</Text>
             <Text style={styles.statLabel}>Transactions</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={[styles.statNumber, styles.redText]}>{userProfile.activeDebts}</Text>
-            <Text style={styles.statLabel}>Active Debts</Text>
           </View>
         </View>
 
-        {/*   Sign Out Section */}
-        {/* Line 26-28: Sign out button with confirmation dialog */}
         <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
           <Text style={styles.signOutIcon}>↗️</Text>
           <Text style={styles.signOutText}>Sign Out</Text>
@@ -209,6 +235,18 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: 'white',
+    textAlign: 'center',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#666',
     textAlign: 'center',
   },
   scrollContainer: {
