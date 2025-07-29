@@ -8,6 +8,8 @@ import {
   SafeAreaView,
   StatusBar,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { ArrowLeft, Send, Mic, ChevronDown, Bot, Wallet } from 'lucide-react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -471,256 +473,125 @@ export default function ChatScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
-      {/*   Set status bar style */}
-      <StatusBar barStyle="light-content" backgroundColor="#3b667c" />
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+        {/*   Set status bar style */}
+        <StatusBar barStyle="light-content" backgroundColor="#3b667c" />
 
-      {/*   Custom header component */}
-      <View
-        style={{
-          backgroundColor: '#3b667c',
-          paddingHorizontal: 16,
-          paddingVertical: 16,
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 12,
-        }}>
-        {/*   Back button */}
-        <TouchableOpacity onPress={handleBackPress} style={{ padding: 4 }} activeOpacity={0.7}>
-          <ArrowLeft size={24} color="#FFFFFF" />
-        </TouchableOpacity>
-
-        {/*   Assistant avatar in header */}
+        {/*   Custom header component */}
         <View
           style={{
-            width: 40,
-            height: 40,
-            backgroundColor: 'rgba(255, 255, 255, 0.2)',
-            borderRadius: 20,
-            justifyContent: 'center',
+            backgroundColor: '#3b667c',
+            paddingHorizontal: 16,
+            paddingVertical: 16,
+            flexDirection: 'row',
             alignItems: 'center',
+            gap: 12,
           }}>
-          <Bot size={20} color="#FFFFFF" />
-        </View>
-
-        {/*   Header title and subtitle */}
-        <View style={{ flex: 1 }}>
-          <Text
-            style={{
-              color: '#FFFFFF',
-              fontSize: 18,
-              fontWeight: '600',
-            }}>
-            Smart Spend Assistant
-          </Text>
-          <Text
-            style={{
-              color: 'rgba(255, 255, 255, 0.8)',
-              fontSize: 14,
-            }}>
-            AI Financial Advisor
-          </Text>
-        </View>
-
-        {/*   Wallet selector dropdown */}
-        <View style={{ position: 'relative' }}>
-          <TouchableOpacity
-            style={{
-              backgroundColor: 'rgba(255, 255, 255, 0.2)',
-              borderRadius: 8,
-              minWidth: 120,
-              height: 40,
-              justifyContent: 'center',
-              alignItems: 'center',
-              paddingHorizontal: 12,
-              flexDirection: 'row',
-              gap: 8,
-            }}
-            onPress={toggleWalletDropdown}
-            activeOpacity={0.8}
-            disabled={isLoadingWallets}>
-            <Wallet size={16} color="#FFFFFF" />
-            <View style={{ flex: 1 }}>
-              <Text
-                style={{
-                  color: '#FFFFFF',
-                  fontSize: 12,
-                  fontWeight: '500',
-                  textAlign: 'center',
-                }}
-                numberOfLines={1}>
-                {isLoadingWallets
-                  ? 'Loading...'
-                  : selectedWallet
-                    ? selectedWallet.name
-                    : 'No Wallet'}
-              </Text>
-              {selectedWallet && (
-                <Text
-                  style={{
-                    color: 'rgba(255, 255, 255, 0.8)',
-                    fontSize: 10,
-                    textAlign: 'center',
-                  }}
-                  numberOfLines={1}>
-                  Rp. {selectedWallet.balance.toFixed(2)}
-                </Text>
-              )}
-            </View>
-            <ChevronDown
-              size={14}
-              color="#FFFFFF"
-              style={{
-                transform: [{ rotate: isWalletDropdownVisible ? '180deg' : '0deg' }],
-              }}
-            />
+          {/*   Back button */}
+          <TouchableOpacity onPress={handleBackPress} style={{ padding: 4 }} activeOpacity={0.7}>
+            <ArrowLeft size={24} color="#FFFFFF" />
           </TouchableOpacity>
 
-          {/*   Wallet dropdown options */}
-          {isWalletDropdownVisible && (
-            <View
+          {/*   Assistant avatar in header */}
+          <View
+            style={{
+              width: 40,
+              height: 40,
+              backgroundColor: 'rgba(255, 255, 255, 0.2)',
+              borderRadius: 20,
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}>
+            <Bot size={20} color="#FFFFFF" />
+          </View>
+
+          {/*   Header title and subtitle */}
+          <View style={{ flex: 1 }}>
+            <Text
               style={{
-                position: 'absolute',
-                top: 45,
-                right: 0,
-                backgroundColor: '#FFFFFF',
-                borderRadius: 8,
-                minWidth: 200,
-                maxHeight: 200,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.1,
-                shadowRadius: 4,
-                elevation: 4,
-                borderWidth: 1,
-                borderColor: '#3b667c',
-                zIndex: 1000,
+                color: '#FFFFFF',
+                fontSize: 18,
+                fontWeight: '600',
               }}>
-              <ScrollView style={{ maxHeight: 180 }}>
-                {userWallets.length > 0 ? (
-                  userWallets.map((wallet, index) => (
-                    <TouchableOpacity
-                      key={wallet._id}
-                      style={{
-                        paddingHorizontal: 12,
-                        paddingVertical: 12,
-                        borderBottomWidth: index < userWallets.length - 1 ? 1 : 0,
-                        borderBottomColor: '#E5E7EB',
-                        backgroundColor:
-                          selectedWallet?._id === wallet._id ? '#F0F9FF' : 'transparent',
-                      }}
-                      onPress={() => selectWallet(wallet)}
-                      activeOpacity={0.7}>
-                      <Text
-                        style={{
-                          color: selectedWallet?._id === wallet._id ? '#3b667c' : '#1F2937',
-                          fontSize: 14,
-                          fontWeight: selectedWallet?._id === wallet._id ? '600' : '400',
-                        }}
-                        numberOfLines={1}>
-                        {wallet.name}
-                      </Text>
-                      <Text
-                        style={{
-                          color: '#6B7280',
-                          fontSize: 12,
-                          marginTop: 2,
-                        }}>
-                        Rp. {wallet.balance} • {wallet.type}
-                      </Text>
-                    </TouchableOpacity>
-                  ))
-                ) : (
-                  <View style={{ padding: 12 }}>
-                    <Text
-                      style={{
-                        color: '#6B7280',
-                        fontSize: 14,
-                        textAlign: 'center',
-                      }}>
-                      No wallets found
-                    </Text>
-                  </View>
-                )}
-              </ScrollView>
-            </View>
-          )}
-        </View>
-      </View>
+              Smart Spend Assistant
+            </Text>
+            <Text
+              style={{
+                color: 'rgba(255, 255, 255, 0.8)',
+                fontSize: 14,
+              }}>
+              AI Financial Advisor
+            </Text>
+          </View>
 
-      {/*   Chat messages container */}
-      <ScrollView
-        style={{
-          flex: 1,
-          backgroundColor: '#F9FAFB',
-          paddingHorizontal: 16,
-          paddingVertical: 16,
-        }}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 20 }}>
-        {/*   Render all messages */}
-        {messages.map(renderMessage)}
-      </ScrollView>
-
-      {/*   Input area container */}
-      <View
-        style={{
-          backgroundColor: '#FFFFFF',
-          borderTopWidth: 1,
-          borderTopColor: '#E5E7EB',
-          paddingHorizontal: 16,
-          paddingVertical: 16,
-        }}>
-        <View
-          style={{
-            flexDirection: 'row',
-            gap: 8,
-            alignItems: 'center',
-          }}>
-          {/*   Mode selector dropdown */}
+          {/*   Wallet selector dropdown */}
           <View style={{ position: 'relative' }}>
             <TouchableOpacity
               style={{
-                backgroundColor: '#3b667c',
+                backgroundColor: 'rgba(255, 255, 255, 0.2)',
                 borderRadius: 8,
-                minWidth: 70,
+                minWidth: 120,
                 height: 40,
                 justifyContent: 'center',
                 alignItems: 'center',
                 paddingHorizontal: 12,
                 flexDirection: 'row',
-                gap: 4,
+                gap: 8,
               }}
-              onPress={toggleDropdown}
-              activeOpacity={0.8}>
-              <Text
-                style={{
-                  color: '#FFFFFF',
-                  fontSize: 14,
-                  fontWeight: '500',
-                  textTransform: 'lowercase',
-                }}>
-                {selectedMode}
-              </Text>
+              onPress={toggleWalletDropdown}
+              activeOpacity={0.8}
+              disabled={isLoadingWallets}>
+              <Wallet size={16} color="#FFFFFF" />
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={{
+                    color: '#FFFFFF',
+                    fontSize: 12,
+                    fontWeight: '500',
+                    textAlign: 'center',
+                  }}
+                  numberOfLines={1}>
+                  {isLoadingWallets
+                    ? 'Loading...'
+                    : selectedWallet
+                      ? selectedWallet.name
+                      : 'No Wallet'}
+                </Text>
+                {selectedWallet && (
+                  <Text
+                    style={{
+                      color: 'rgba(255, 255, 255, 0.8)',
+                      fontSize: 10,
+                      textAlign: 'center',
+                    }}
+                    numberOfLines={1}>
+                    Rp. {selectedWallet.balance.toFixed(2)}
+                  </Text>
+                )}
+              </View>
               <ChevronDown
-                size={16}
+                size={14}
                 color="#FFFFFF"
                 style={{
-                  transform: [{ rotate: isDropdownVisible ? '180deg' : '0deg' }],
+                  transform: [{ rotate: isWalletDropdownVisible ? '180deg' : '0deg' }],
                 }}
               />
             </TouchableOpacity>
 
-            {/*   Dropdown options */}
-            {isDropdownVisible && (
+            {/*   Wallet dropdown options */}
+            {isWalletDropdownVisible && (
               <View
                 style={{
                   position: 'absolute',
-                  bottom: 45,
-                  left: 0,
+                  top: 45,
+                  right: 0,
                   backgroundColor: '#FFFFFF',
                   borderRadius: 8,
-                  minWidth: 70,
+                  minWidth: 200,
+                  maxHeight: 200,
                   shadowColor: '#000',
                   shadowOffset: { width: 0, height: 2 },
                   shadowOpacity: 0.1,
@@ -730,133 +601,268 @@ export default function ChatScreen() {
                   borderColor: '#3b667c',
                   zIndex: 1000,
                 }}>
-                {dropdownOptions.map((option) => (
-                  <TouchableOpacity
-                    key={option.value}
-                    style={{
-                      paddingHorizontal: 12,
-                      paddingVertical: 10,
-                      borderBottomWidth: option.value === 'ask' ? 1 : 0,
-                      borderBottomColor: '#E5E7EB',
-                    }}
-                    onPress={() => selectDropdownOption(option.value as 'ask' | 'input')}
-                    activeOpacity={0.7}>
-                    <Text
-                      style={{
-                        color: selectedMode === option.value ? '#3b667c' : '#1F2937',
-                        fontSize: 14,
-                        fontWeight: selectedMode === option.value ? '600' : '400',
-                        textTransform: 'lowercase',
-                      }}>
-                      {option.label.toLowerCase()}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                <ScrollView style={{ maxHeight: 180 }}>
+                  {userWallets.length > 0 ? (
+                    userWallets.map((wallet, index) => (
+                      <TouchableOpacity
+                        key={wallet._id}
+                        style={{
+                          paddingHorizontal: 12,
+                          paddingVertical: 12,
+                          borderBottomWidth: index < userWallets.length - 1 ? 1 : 0,
+                          borderBottomColor: '#E5E7EB',
+                          backgroundColor:
+                            selectedWallet?._id === wallet._id ? '#F0F9FF' : 'transparent',
+                        }}
+                        onPress={() => selectWallet(wallet)}
+                        activeOpacity={0.7}>
+                        <Text
+                          style={{
+                            color: selectedWallet?._id === wallet._id ? '#3b667c' : '#1F2937',
+                            fontSize: 14,
+                            fontWeight: selectedWallet?._id === wallet._id ? '600' : '400',
+                          }}
+                          numberOfLines={1}>
+                          {wallet.name}
+                        </Text>
+                        <Text
+                          style={{
+                            color: '#6B7280',
+                            fontSize: 12,
+                            marginTop: 2,
+                          }}>
+                          Rp. {wallet.balance} • {wallet.type}
+                        </Text>
+                      </TouchableOpacity>
+                    ))
+                  ) : (
+                    <View style={{ padding: 12 }}>
+                      <Text
+                        style={{
+                          color: '#6B7280',
+                          fontSize: 14,
+                          textAlign: 'center',
+                        }}>
+                        No wallets found
+                      </Text>
+                    </View>
+                  )}
+                </ScrollView>
               </View>
             )}
           </View>
+        </View>
 
-          {/*   Input field container */}
-          <View style={{ flex: 1, position: 'relative' }}>
-            <TextInput
-              style={{
-                backgroundColor: '#F9FAFB',
-                borderWidth: 1,
-                borderColor: '#3b667c',
-                borderRadius: 24,
-                paddingHorizontal: 16,
-                paddingRight: 48,
-                paddingVertical: 12,
-                fontSize: 14,
-                height: 48,
-              }}
-              placeholder="Ask me about your finances..."
-              placeholderTextColor="#9CA3AF"
-              value={inputText}
-              onChangeText={setInputText}
-              multiline={false}
-              returnKeyType="send"
-              onSubmitEditing={handleSendMessage}
-            />
+        {/*   Chat messages container */}
+        <ScrollView
+          style={{
+            flex: 1,
+            backgroundColor: '#F9FAFB',
+            paddingHorizontal: 16,
+            paddingVertical: 16,
+          }}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 20 }}>
+          {/*   Render all messages */}
+          {messages.map(renderMessage)}
+        </ScrollView>
 
-            {/*   Voice input button with processing state */}
+        {/*   Input area container */}
+        <View
+          style={{
+            backgroundColor: '#FFFFFF',
+            borderTopWidth: 1,
+            borderTopColor: '#E5E7EB',
+            paddingHorizontal: 16,
+            paddingVertical: 16,
+          }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              gap: 8,
+              alignItems: 'center',
+            }}>
+            {/*   Mode selector dropdown */}
+            <View style={{ position: 'relative' }}>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: '#3b667c',
+                  borderRadius: 8,
+                  minWidth: 70,
+                  height: 40,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  paddingHorizontal: 12,
+                  flexDirection: 'row',
+                  gap: 4,
+                }}
+                onPress={toggleDropdown}
+                activeOpacity={0.8}>
+                <Text
+                  style={{
+                    color: '#FFFFFF',
+                    fontSize: 14,
+                    fontWeight: '500',
+                    textTransform: 'lowercase',
+                  }}>
+                  {selectedMode}
+                </Text>
+                <ChevronDown
+                  size={16}
+                  color="#FFFFFF"
+                  style={{
+                    transform: [{ rotate: isDropdownVisible ? '180deg' : '0deg' }],
+                  }}
+                />
+              </TouchableOpacity>
+
+              {/*   Dropdown options */}
+              {isDropdownVisible && (
+                <View
+                  style={{
+                    position: 'absolute',
+                    bottom: 45,
+                    left: 0,
+                    backgroundColor: '#FFFFFF',
+                    borderRadius: 8,
+                    minWidth: 70,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 4,
+                    elevation: 4,
+                    borderWidth: 1,
+                    borderColor: '#3b667c',
+                    zIndex: 1000,
+                  }}>
+                  {dropdownOptions.map((option) => (
+                    <TouchableOpacity
+                      key={option.value}
+                      style={{
+                        paddingHorizontal: 12,
+                        paddingVertical: 10,
+                        borderBottomWidth: option.value === 'ask' ? 1 : 0,
+                        borderBottomColor: '#E5E7EB',
+                      }}
+                      onPress={() => selectDropdownOption(option.value as 'ask' | 'input')}
+                      activeOpacity={0.7}>
+                      <Text
+                        style={{
+                          color: selectedMode === option.value ? '#3b667c' : '#1F2937',
+                          fontSize: 14,
+                          fontWeight: selectedMode === option.value ? '600' : '400',
+                          textTransform: 'lowercase',
+                        }}>
+                        {option.label.toLowerCase()}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </View>
+
+            {/*   Input field container */}
+            <View style={{ flex: 1, position: 'relative' }}>
+              <TextInput
+                style={{
+                  backgroundColor: '#F9FAFB',
+                  borderWidth: 1,
+                  borderColor: '#3b667c',
+                  borderRadius: 24,
+                  paddingHorizontal: 16,
+                  paddingRight: 48,
+                  paddingVertical: 12,
+                  fontSize: 14,
+                  height: 48,
+                }}
+                placeholder="Ask me about your finances..."
+                placeholderTextColor="#9CA3AF"
+                value={inputText}
+                onChangeText={setInputText}
+                multiline={false}
+                returnKeyType="send"
+                onSubmitEditing={handleSendMessage}
+              />
+
+              {/*   Voice input button with processing state */}
+              <TouchableOpacity
+                style={{
+                  position: 'absolute',
+                  right: 8,
+                  top: '50%',
+                  transform: [{ translateY: -16 }],
+                  width: 32,
+                  height: 32,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  opacity: isProcessingVoice ? 0.5 : 1,
+                }}
+                onPress={handleVoiceInput}
+                activeOpacity={0.7}
+                disabled={isProcessingVoice}>
+                <Mic size={16} color={isProcessingVoice ? '#6B7280' : '#9CA3AF'} />
+              </TouchableOpacity>
+            </View>
+
+            {/*   Send button */}
             <TouchableOpacity
               style={{
-                position: 'absolute',
-                right: 8,
-                top: '50%',
-                transform: [{ translateY: -16 }],
-                width: 32,
-                height: 32,
+                backgroundColor: '#3b667c',
+                width: 48,
+                height: 48,
+                borderRadius: 24,
                 justifyContent: 'center',
                 alignItems: 'center',
-                opacity: isProcessingVoice ? 0.5 : 1,
               }}
-              onPress={handleVoiceInput}
-              activeOpacity={0.7}
-              disabled={isProcessingVoice}>
-              <Mic size={16} color={isProcessingVoice ? '#6B7280' : '#9CA3AF'} />
+              onPress={handleSendMessage}
+              activeOpacity={0.8}>
+              <Send size={20} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
+        </View>
 
-          {/*   Send button */}
+        {/*   Dropdown overlay to close dropdown when tapping outside */}
+        {isDropdownVisible && (
           <TouchableOpacity
             style={{
-              backgroundColor: '#3b667c',
-              width: 48,
-              height: 48,
-              borderRadius: 24,
-              justifyContent: 'center',
-              alignItems: 'center',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'transparent',
+              zIndex: 999,
             }}
-            onPress={handleSendMessage}
-            activeOpacity={0.8}>
-            <Send size={20} color="#FFFFFF" />
-          </TouchableOpacity>
-        </View>
-      </View>
+            onPress={() => setIsDropdownVisible(false)}
+            activeOpacity={1}
+          />
+        )}
 
-      {/*   Dropdown overlay to close dropdown when tapping outside */}
-      {isDropdownVisible && (
-        <TouchableOpacity
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'transparent',
-            zIndex: 999,
-          }}
-          onPress={() => setIsDropdownVisible(false)}
-          activeOpacity={1}
+        {/*   Wallet dropdown overlay to close dropdown when tapping outside */}
+        {isWalletDropdownVisible && (
+          <TouchableOpacity
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'transparent',
+              zIndex: 999,
+            }}
+            onPress={() => setIsWalletDropdownVisible(false)}
+            activeOpacity={1}
+          />
+        )}
+
+        {/*   Voice recording modal component */}
+        <VoiceRecorderModal
+          isVisible={isVoiceModalVisible}
+          currentMode={selectedMode}
+          onTranscriptionComplete={handleVoiceTranscriptionComplete}
+          onCancel={handleVoiceCancel}
         />
-      )}
-
-      {/*   Wallet dropdown overlay to close dropdown when tapping outside */}
-      {isWalletDropdownVisible && (
-        <TouchableOpacity
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'transparent',
-            zIndex: 999,
-          }}
-          onPress={() => setIsWalletDropdownVisible(false)}
-          activeOpacity={1}
-        />
-      )}
-
-      {/*   Voice recording modal component */}
-      <VoiceRecorderModal
-        isVisible={isVoiceModalVisible}
-        currentMode={selectedMode}
-        onTranscriptionComplete={handleVoiceTranscriptionComplete}
-        onCancel={handleVoiceCancel}
-      />
-    </SafeAreaView>
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
