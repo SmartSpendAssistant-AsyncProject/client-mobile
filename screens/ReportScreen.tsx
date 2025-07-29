@@ -1,5 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import * as SecureStore from 'expo-secure-store';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { RootStackNavigationProp } from '../types/navigation';
+import { VictoryPie, VictoryLabel } from 'victory-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   View,
   Text,
@@ -7,6 +11,8 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
+  ScrollView,
+  Dimensions,
 } from 'react-native';
 
 type Wallet = {
@@ -85,6 +91,16 @@ type ReportItem = {
   type: 'income' | 'expense';
 };
 
+type PieChartData = {
+  x: string; // category name
+  y: number; // amount
+  color?: string;
+};
+
+type CategorySummary = {
+  [categoryName: string]: number;
+};
+
 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 // Helper function to get current month abbreviation
@@ -122,70 +138,206 @@ const transformTransactionToReportItem = (transaction: Transaction): ReportItem 
 };
 
 export default function ReportScreen() {
+  const navigation = useNavigation<RootStackNavigationProp>();
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
   const [transactions, setTransactions] = useState<ReportItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'transactions' | 'reports'>('transactions');
+
+  // Summary data states
+  const [summaryData, setSummaryData] = useState<SummaryData>({
+    income: 0,
+    expense: 0,
+    netIncome: 0,
+  });
+
+  // Pie chart data states
+  const [incomePieData, setIncomePieData] = useState<PieChartData[]>([]);
+  const [expensePieData, setExpensePieData] = useState<PieChartData[]>([]);
 
   const BASE_URL = process.env.BASE_URL || 'https://ssa-server-omega.vercel.app';
 
-  const fetchTransactions = async (month: string) => {
-    const access_token = await SecureStore.getItemAsync('access_token');
-    setLoading(true);
-    setError(null);
+  // Function to process transactions data for pie charts
+  const processCategoryData = (
+    transactions: Transaction[]
+  ): {
+    income: PieChartData[];
+    expense: PieChartData[];
+  } => {
+    const incomeCategories: CategorySummary = {};
+    const expenseCategories: CategorySummary = {};
 
-    try {
-      const monthNumber = getMonthNumber(month);
-      const response = await fetch(`${BASE_URL}/api/transactions?month=2025-${monthNumber}`, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${access_token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+    transactions.forEach((transaction) => {
+      const categoryName = transaction.category.name;
+      const amount = transaction.ammount;
+      const categoryType = transaction.category.type;
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      // Group income and debt as income, loan and expense as expense
+      if (categoryType === 'income' || categoryType === 'debt') {
+        incomeCategories[categoryName] = (incomeCategories[categoryName] || 0) + amount;
+      } else if (categoryType === 'loan' || categoryType === 'expense') {
+        expenseCategories[categoryName] = (expenseCategories[categoryName] || 0) + amount;
       }
+    });
 
-      const data: ApiResponse = await response.json();
+    // Convert to pie chart data format with colors
+    const incomeColors = [
+      '#22c55e', // Green
+      '#3b82f6', // Blue
+      '#0891b2', // Cyan-600
+      '#06b6d4', // Cyan
+      '#10b981', // Emerald
+      '#6366f1', // Indigo
+      '#84cc16', // Lime
+      '#0ea5e9', // Sky
+      '#14b8a6', // Teal
+      '#8b5a2b', // Brown
+      '#f59e0b', // Amber
+      '#eab308', // Yellow
+    ];
 
-      // Transform API data to display format
-      const transformedTransactions = data.data.map(transformTransactionToReportItem);
+    const expenseColors = [
+      '#ef4444', // Red
+      '#f97316', // Orange
+      '#eab308', // Yellow
+      '#84cc16', // Lime
+      '#06b6d4', // Cyan
+      '#3b82f6', // Blue
+      '#6366f1', // Indigo
+      '#ec4899', // Pink
+      '#8b5a2b', // Brown
+      '#6b7280', // Gray
+      '#059669', // Emerald
+      '#92400e', // Amber-800
+    ];
 
-      setTransactions(transformedTransactions);
-    } catch (err) {
-      console.error('Error fetching transactions:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch transactions');
-      setTransactions([]);
-    } finally {
-      setLoading(false);
-    }
+    const incomeData = Object.entries(incomeCategories).map(([categoryName, amount], index) => ({
+      x: categoryName,
+      y: amount,
+      color: incomeColors[index % incomeColors.length],
+    }));
+
+    const expenseData = Object.entries(expenseCategories).map(([categoryName, amount], index) => ({
+      x: categoryName,
+      y: amount,
+      color: expenseColors[index % expenseColors.length],
+    }));
+
+    return { income: incomeData, expense: expenseData };
   };
+
+  const fetchTransactions = useCallback(
+    async (month: string) => {
+      const access_token = await SecureStore.getItemAsync('access_token');
+      setLoading(true);
+      setError(null);
+
+      try {
+        const monthNumber = getMonthNumber(month);
+        const response = await fetch(`${BASE_URL}/api/transactions?month=2025-${monthNumber}`, {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${access_token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data: ApiResponse = await response.json();
+
+        // Transform API data to display format
+        const transformedTransactions = data.data.map(transformTransactionToReportItem);
+
+        // Process data for pie charts
+        const categoryData = processCategoryData(data.data);
+
+        // Update states
+        setTransactions(transformedTransactions);
+        setSummaryData(data.summaryData);
+        setIncomePieData(categoryData.income);
+        setExpensePieData(categoryData.expense);
+      } catch (err) {
+        console.error('Error fetching transactions:', err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch transactions');
+        setTransactions([]);
+        setSummaryData({ income: 0, expense: 0, netIncome: 0 });
+        setIncomePieData([]);
+        setExpensePieData([]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [BASE_URL]
+  );
 
   useEffect(() => {
     fetchTransactions(selectedMonth);
-  }, [selectedMonth]);
+  }, [selectedMonth, fetchTransactions]);
+
+  // Refresh data when screen comes into focus or when switching tabs
+  useFocusEffect(
+    useCallback(() => {
+      fetchTransactions(selectedMonth);
+    }, [selectedMonth, fetchTransactions])
+  );
 
   const handleMonthChange = (month: string) => {
     setSelectedMonth(month);
   };
 
-  const renderTransactionItem = ({ item }: { item: ReportItem }) => (
-    <View style={styles.listItem}>
-      <View style={styles.transactionRow}>
-        <View style={styles.transactionInfo}>
-          <Text style={styles.title}>{item.category}</Text>
-          <Text style={styles.category}>{item.title}</Text>
-          <Text style={styles.date}>{item.date}</Text>
+  const handleTransactionPress = (transactionId: string) => {
+    navigation.navigate('Update', { _id: transactionId });
+  };
+
+  // Pie Chart Components
+  const renderPieChart = (data: PieChartData[], title: string, totalAmount: number) => {
+    if (data.length === 0) {
+      return (
+        <View style={styles.chartContainer}>
+          <Text style={styles.chartTitle}>{title}</Text>
+          <View style={styles.noDataContainer}>
+            <Text style={styles.noDataText}>No data available</Text>
+          </View>
         </View>
-        <Text style={[styles.amount, item.type === 'income' ? styles.income : styles.expense]}>
-          {item.type === 'income' ? 'Rp. ' : 'Rp. -'}
-          {item.amount.toLocaleString('id-ID')}
-        </Text>
+      );
+    }
+
+    const { width: screenWidth } = Dimensions.get('window');
+    const chartSize = screenWidth * 0.4;
+
+    return (
+      <View style={styles.chartContainer}>
+        <Text style={styles.chartTitle}>{title}</Text>
+        <Text style={styles.totalAmount}>Rp. {totalAmount.toLocaleString('id-ID')}</Text>
+
+        <VictoryPie
+          data={data}
+          width={chartSize}
+          height={chartSize}
+          colorScale={data.map((item) => item.color || '#ccc')}
+          innerRadius={chartSize * 0.1}
+          labelComponent={<VictoryLabel style={{ fontSize: 10, fill: 'white' }} />}
+          labelRadius={({ innerRadius }) => (innerRadius as number) + chartSize * 0.1}
+        />
+
+        {/* Legend */}
+        <View style={styles.legend}>
+          {data.map((item, index) => (
+            <View key={index} style={styles.legendItem}>
+              <View style={[styles.legendColor, { backgroundColor: item.color }]} />
+              <Text style={styles.legendText}>
+                {item.x}: Rp. {item.y.toLocaleString('id-ID')}
+              </Text>
+            </View>
+          ))}
+        </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   const renderMonthItem = ({ item }: { item: string }) => (
     <TouchableOpacity onPress={() => handleMonthChange(item)}>
@@ -225,23 +377,88 @@ export default function ReportScreen() {
     }
 
     return (
-      <FlatList
-        data={transactions}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.transactionsList}
-        renderItem={renderTransactionItem}
-        showsVerticalScrollIndicator={false}
-      />
+      <View style={styles.transactionsList}>
+        {transactions.map((item) => (
+          <TouchableOpacity
+            key={item.id}
+            onPress={() => handleTransactionPress(item.id)}
+            activeOpacity={0.7}
+            style={styles.touchableItem}>
+            <View style={styles.listItem}>
+              <View style={styles.transactionRow}>
+                <View style={styles.transactionInfo}>
+                  <Text style={styles.title}>{item.category}</Text>
+                  <Text style={styles.category}>{item.title}</Text>
+                  <Text style={styles.date}>{item.date}</Text>
+                </View>
+                <Text
+                  style={[styles.amount, item.type === 'income' ? styles.income : styles.expense]}>
+                  {item.type === 'income' ? 'Rp. ' : 'Rp. -'}
+                  {item.amount.toLocaleString('id-ID')}
+                </Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </View>
     );
   };
 
+  const renderTabContent = () => {
+    if (activeTab === 'transactions') {
+      return (
+        <View style={styles.transactionsSection}>
+          <Text style={styles.sectionTitle}>Transactions</Text>
+          {renderContent()}
+        </View>
+      );
+    } else {
+      return (
+        <View style={styles.chartsSection}>
+          <Text style={styles.sectionTitle}>Category Breakdown</Text>
+          <View style={styles.chartsRow}>
+            {renderPieChart(incomePieData, 'Income', summaryData.income)}
+            {renderPieChart(expensePieData, 'Expense', summaryData.expense)}
+          </View>
+
+          {/* Net Income Summary */}
+          <View style={styles.summaryCard}>
+            <Text style={styles.summaryTitle}>Monthly Summary</Text>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Total Income:</Text>
+              <Text style={[styles.summaryValue, styles.income]}>
+                Rp. {summaryData.income.toLocaleString('id-ID')}
+              </Text>
+            </View>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Total Expense:</Text>
+              <Text style={[styles.summaryValue, styles.expense]}>
+                Rp. {summaryData.expense.toLocaleString('id-ID')}
+              </Text>
+            </View>
+            <View style={[styles.summaryRow, styles.netIncomeRow]}>
+              <Text style={styles.summaryLabel}>Net Income:</Text>
+              <Text
+                style={[
+                  styles.summaryValue,
+                  summaryData.netIncome >= 0 ? styles.income : styles.expense,
+                ]}>
+                Rp. {summaryData.netIncome.toLocaleString('id-ID')}
+              </Text>
+            </View>
+          </View>
+        </View>
+      );
+    }
+  };
+
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Reports</Text>
       </View>
 
-      <View style={styles.content}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.monthSliderContainer}>
           <FlatList
             data={months}
@@ -253,9 +470,28 @@ export default function ReportScreen() {
           />
         </View>
 
-        {renderContent()}
-      </View>
-    </View>
+        {/* Tab Navigation */}
+        <View style={styles.tabContainer}>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'transactions' && styles.activeTab]}
+            onPress={() => setActiveTab('transactions')}>
+            <Text style={[styles.tabText, activeTab === 'transactions' && styles.activeTabText]}>
+              Transactions
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'reports' && styles.activeTab]}
+            onPress={() => setActiveTab('reports')}>
+            <Text style={[styles.tabText, activeTab === 'reports' && styles.activeTabText]}>
+              Reports
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Tab Content */}
+        {!loading && !error && renderTabContent()}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -346,6 +582,9 @@ const styles = StyleSheet.create({
   transactionsList: {
     paddingBottom: 16,
   },
+  touchableItem: {
+    borderRadius: 8,
+  },
   transactionRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -384,5 +623,146 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#94a3b8',
     marginTop: 2,
+  },
+
+  // Pie chart and summary styles
+  chartsSection: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1e293b',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  chartsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'flex-start',
+    marginBottom: 20,
+  },
+  chartContainer: {
+    alignItems: 'center',
+    flex: 1,
+    paddingHorizontal: 8,
+  },
+  chartTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#334155',
+    marginBottom: 8,
+  },
+  totalAmount: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#64748b',
+    marginBottom: 12,
+  },
+  noDataContainer: {
+    height: 120,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  noDataText: {
+    fontSize: 14,
+    color: '#94a3b8',
+    fontStyle: 'italic',
+  },
+  legend: {
+    marginTop: 12,
+    width: '100%',
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  legendColor: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 8,
+  },
+  legendText: {
+    fontSize: 10,
+    color: '#64748b',
+    flex: 1,
+  },
+  summaryCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 16,
+    marginHorizontal: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  summaryTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1e293b',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  netIncomeRow: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
+  },
+  summaryLabel: {
+    fontSize: 14,
+    color: '#64748b',
+    fontWeight: '500',
+  },
+  summaryValue: {
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  transactionsSection: {
+    flex: 1,
+  },
+
+  // Tab styles
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
+    marginBottom: 16,
+    padding: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activeTab: {
+    backgroundColor: '#3b667c',
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#64748b',
+  },
+  activeTabText: {
+    color: '#ffffff',
+    fontWeight: 'bold',
   },
 });

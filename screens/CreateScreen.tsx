@@ -6,12 +6,12 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-  SafeAreaView,
   Alert,
   Platform,
   ActivityIndicator,
   KeyboardAvoidingView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { RootStackNavigationProp } from '../types/navigation';
 import { Calendar, ChevronDown, Plus } from 'lucide-react-native';
@@ -312,7 +312,7 @@ export default function CreateScreen() {
     <KeyboardAvoidingView
       style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top']}>
         {/*   Header section with title */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Add Transaction</Text>
