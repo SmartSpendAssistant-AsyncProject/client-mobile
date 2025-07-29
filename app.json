@@ -1,24 +1,26 @@
 {
   "expo": {
     "name": "Smart Spend Assistant",
-    "slug": "Smart Spend Assistant",
+    "scheme": "smartspendassistant",
+    "slug": "smart-spend-assistant",
     "version": "1.0.0",
-
     "web": {
       "favicon": "./assets/favicon.png"
     },
-
     "experiments": {
       "tsconfigPaths": true
     },
-
-    "plugins": [],
-
+    "plugins": [
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone for voice messages."
+        }
+      ]
+    ],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-
     "userInterfaceStyle": "light",
-
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -26,12 +28,23 @@
     },
     "assetBundlePatterns": ["**/*"],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "This app needs access to microphone to record voice messages for financial transactions and questions."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
+      },
+      "package": "com.lycanix.SmartSpendAssistant",
+      "permissions": ["android.permission.RECORD_AUDIO"]
+    },
+    "owner": "lycanix",
+    "extra": {
+      "eas": {
+        "projectId": "249517db-9d9e-4789-ad40-ca38292b834e"
       }
     }
   }

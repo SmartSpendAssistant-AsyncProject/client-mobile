@@ -1,48 +1,99 @@
-import React, { useState } from 'react';
-import { View, Button, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Button, KeyboardAvoidingView, Platform, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
+import { RootStackParamList, RootStackNavigationProp } from 'types/navigation';
+import { DebtLoanItem } from 'types/DebtLoan';
+import DebtLoanService, { Wallet } from 'utils/DebtLoanService';
 import CardRepayCollect from '../components/CardRepayCollect';
 
-const dummyWallets = [
-  { id: 'w1', name: 'Gopay', balance: 800000 },
-  { id: 'w2', name: 'ShopeePay', balance: 150000 },
-  { id: 'w3', name: 'Dana', balance: 500000 },
-  { id: 'w4', name: 'Dana 1', balance: 100000 },
-  { id: 'w5', name: 'Dana 2', balance: 200000 },
-  { id: 'w6', name: 'Dana 3', balance: 300000 },
-  { id: 'w7', name: 'Dana 4', balance: 400000 },
-  { id: 'w8', name: 'Dana 5', balance: 500000 },
-  { id: 'w9', name: 'Dana 6', balance: 600000 },
-  { id: 'w10', name: 'Dana 7', balance: 700000 },
-  { id: 'w11', name: 'Dana 8', balance: 800000 },
-  { id: 'w12', name: 'Dana 9', balance: 900000 },
-  { id: 'w13', name: 'Dana 10', balance: 1000000 },
-];
+type RepaymentScreenRouteProp = RouteProp<RootStackParamList, 'Repayment'>;
 
-export default function RepaymentScreen({ navigation }: any) {
-  // Sementara any dulu
+export default function RepaymentScreen() {
+  const [wallets, setWallets] = useState<Wallet[]>([]);
   const [amount, setAmount] = useState(0);
   const [selectedWalletId, setSelectedWalletId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingWallets, setIsLoadingWallets] = useState(true);
   const insets = useSafeAreaInsets();
+  const route = useRoute<RepaymentScreenRouteProp>();
+  const navigation = useNavigation<RootStackNavigationProp>();
+  const { debtItem } = route.params;
 
-  const handleRepay = () => {
-    if (!selectedWalletId || amount <= 0) {
-      alert('Please fill out payment info');
-      return;
+  useEffect(() => {
+    fetchWallets();
+  }, []);
+
+  const fetchWallets = async () => {
+    try {
+      setIsLoadingWallets(true);
+      const data = await DebtLoanService.getWallets();
+      setWallets(data);
+    } catch (error) {
+      console.error('Error fetching wallets:', error);
+      Alert.alert('Error', 'Failed to fetch wallets');
+    } finally {
+      setIsLoadingWallets(false);
     }
-
-    const selectedWallet = dummyWallets.find((w) => w.id === selectedWalletId);
-    if (selectedWallet && selectedWallet.balance < amount) {
-      alert(`Insufficient balance in ${selectedWallet.name}`);
-      return;
-    }
-
-    alert(`Payment of Rp ${amount.toLocaleString('id-ID')} from ${selectedWalletId} submitted`);
-
-    navigation.navigate('Debt'); // Sementara
   };
 
-  //TODO: sementara SafeAreaProvider di page ini saja, mungkin nanti di App.tsx
+  const handleRepay = async () => {
+    if (!selectedWalletId || amount <= 0) {
+      Alert.alert('Error', 'Please fill out payment info');
+      return;
+    }
+
+    const selectedWallet = wallets.find((w) => w._id === selectedWalletId);
+    if (selectedWallet && selectedWallet.balance < amount) {
+      Alert.alert('Error', `Insufficient balance in ${selectedWallet.name}`);
+      return;
+    }
+
+    if (amount > debtItem.remaining_ammount) {
+      Alert.alert('Error', `Amount cannot exceed remaining debt amount (Rp. ${debtItem.remaining_ammount.toLocaleString('id-ID')})`);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      
+      const repaymentData = {
+        description: `Repayment for ${debtItem.name}`,
+        ammount: amount,
+        wallet_id: selectedWalletId,
+        parent_id: debtItem._id,
+      };
+
+      await DebtLoanService.createRepayment(repaymentData);
+      
+      Alert.alert('Success', `Payment of Rp ${amount.toLocaleString('id-ID')} has been processed successfully!`, [
+        { text: 'OK', onPress: () => navigation.navigate('Debt') }
+      ]);
+    } catch (error) {
+      console.error('Error creating repayment:', error);
+      Alert.alert('Error', 'Failed to process payment. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoadingWallets) {
+    return (
+      <SafeAreaProvider>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color="#3b667c" />
+        </View>
+      </SafeAreaProvider>
+    );
+  }
+
+  // Convert wallet data to format expected by CardRepayCollect
+  const walletOptions = wallets.map(wallet => ({
+    id: wallet._id,
+    name: wallet.name,
+    balance: wallet.balance,
+  }));
+
   return (
     <SafeAreaProvider>
       <KeyboardAvoidingView
@@ -51,12 +102,12 @@ export default function RepaymentScreen({ navigation }: any) {
         <View style={{ flex: 1, padding: 16 }}>
           <CardRepayCollect
             amount={amount}
-            wallets={dummyWallets}
+            wallets={walletOptions}
             selectedWalletId={selectedWalletId}
             onChangeAmount={setAmount}
             onSelectWallet={setSelectedWalletId}
             mode="repay"
-            targetName="Credit Card - BCA"
+            targetName={debtItem.name}
           />
         </View>
 
@@ -69,7 +120,11 @@ export default function RepaymentScreen({ navigation }: any) {
             borderTopWidth: 1,
             borderColor: '#ddd',
           }}>
-          <Button title="Process Payment" onPress={handleRepay} />
+          <Button 
+            title={isLoading ? "Processing..." : "Process Payment"} 
+            onPress={handleRepay} 
+            disabled={isLoading}
+          />
         </View>
       </KeyboardAvoidingView>
     </SafeAreaProvider>

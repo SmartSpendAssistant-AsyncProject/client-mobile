@@ -52,7 +52,9 @@ export default function CardRepayCollect({
 
       {/* Card 2: Wallets */}
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Pay from Wallet</Text>
+        <Text style={styles.cardTitle}>
+          {mode === 'repay' ? 'Pay from Wallet' : 'Collect to Wallet'}
+        </Text>
         <FlatList
           data={wallets}
           keyExtractor={(item) => item.id}

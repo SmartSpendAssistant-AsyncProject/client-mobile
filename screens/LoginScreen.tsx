@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,25 +8,134 @@ import {
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { RootStackNavigationProp } from '../types/navigation';
+import { useAuth } from '../utils/AuthContext';
+import * as Device from 'expo-device';
+import * as Notifications from 'expo-notifications';
+import Constants from 'expo-constants';
+import * as SecureStore from 'expo-secure-store';
+
+const BASE_URL = 'https://ssa-server-omega.vercel.app';
+
+function handleRegistrationError(errorMessage: string) {
+  alert(errorMessage);
+  throw new Error(errorMessage);
+}
+
+async function registerForPushNotificationsAsync() {
+  if (Platform.OS === 'android') {
+    await Notifications.setNotificationChannelAsync('default', {
+      name: 'default',
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#FF231F7C',
+    });
+  }
+
+  if (Device.isDevice) {
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
+    if (existingStatus !== 'granted') {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
+    if (finalStatus !== 'granted') {
+      handleRegistrationError('Permission not granted to get push token for push notification!');
+      return;
+    }
+    const projectId =
+      Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
+    if (!projectId) {
+      handleRegistrationError('Project ID not found');
+    }
+    try {
+      const pushTokenString = (
+        await Notifications.getExpoPushTokenAsync({
+          projectId,
+        })
+      ).data;
+      console.log(pushTokenString);
+      return pushTokenString;
+    } catch (e: unknown) {
+      handleRegistrationError(`${e}`);
+    }
+  } else {
+    handleRegistrationError('Must use physical device for push notifications');
+  }
+}
 
 export default function LoginScreen() {
-  // ALGORITHM: Navigation and State Management
-  // Line 1: Initialize navigation hook for screen transitions
+  const [expoPushToken, setExpoPushToken] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const { login } = useAuth();
+
+  //   Navigation and State Management
+  //     Initialize navigation hook for screen transitions
   const navigation = useNavigation<RootStackNavigationProp>();
 
   // Line 2-3: State management for form inputs
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  // ALGORITHM: Form Submission Handler
-  // Line 4: Handle login form submission and navigate to main tabs
-  const handleSubmit = () => {
-    // TODO: Add authentication logic here
-    console.log('Login attempt with:', { email, password });
-    navigation.navigate('MainTabs');
+  useEffect(() => {
+    registerForPushNotificationsAsync()
+      .then((token) => setExpoPushToken(token ?? ''))
+      .catch((error: unknown) => setExpoPushToken(`${error}`));
+  }, []);
+
+  console.log('Expo Push Token:', expoPushToken);
+
+  //   Form Submission Handler
+  //    Handle login form submission and navigate to main tabs
+
+  const handleSubmit = async () => {
+    if (!email || !password) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Login request to server
+      const response = await fetch(`${BASE_URL}/api/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          token: expoPushToken, // Send expo push token with login
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Use AuthContext login method
+        await login(data.access_token);
+
+        console.log('Login successful:', {
+          email,
+          token: expoPushToken,
+          access_token: data.access_token,
+        });
+
+        // Navigate to main tabs on successful login
+        navigation.navigate('MainTabs');
+      } else {
+        Alert.alert('Login Failed', data.message || 'Invalid credentials');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      Alert.alert('Error', 'Network error. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // ALGORITHM: Navigation Handler
@@ -77,7 +186,7 @@ export default function LoginScreen() {
                 {/* Line 22-28: Password input field with secure text entry */}
                 <TextInput
                   style={styles.input}
-                  placeholder="Passwords"
+                  placeholder="Password"
                   placeholderTextColor="#9CA3AF"
                   value={password}
                   onChangeText={setPassword}
@@ -87,9 +196,15 @@ export default function LoginScreen() {
                 />
               </View>
 
-              {/* Line 29-33: Submit button with press handler */}
-              <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-                <Text style={styles.submitButtonText}>Submit</Text>
+              {/*    Submit button with press handler */}
+
+              <TouchableOpacity
+                style={[styles.submitButton, isLoading && styles.submitButtonDisabled]}
+                onPress={handleSubmit}
+                disabled={isLoading}>
+                <Text style={styles.submitButtonText}>
+                  {isLoading ? 'Logging in...' : 'Submit'}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -209,6 +324,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 3,
+  },
+
+  // Submit button disabled styling
+  submitButtonDisabled: {
+    backgroundColor: '#9CA3AF', // Gray color when disabled
+    opacity: 0.7,
   },
 
   // Submit button text styling

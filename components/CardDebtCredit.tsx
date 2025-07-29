@@ -1,36 +1,36 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
-// import { format } from 'date-fns';
+import { format } from 'date-fns';
 
 /*
   name: string;
   description: string;
-  amount: number;
+  ammount: number;
   date: string;
-  remaining_amount: number;
+  remaining_ammount: number;
   onPress: () => void; => untuk button navigasi yang reusable/customize
   buttonLabel?: string; => untuk label button yang bisa reusable/customize
   */
 
 type CardDebtCreditProps = {
-  title: string;
+  name: string;
   description: string;
-  amount: number;
-  total: number;
+  ammount: number;
+  date: string;
+  remaining_ammount: number;
   onPress: () => void;
   buttonLabel?: string;
-  // dueDate: string;
 };
 
 //! sementara style masih inline, nanti bisa di refactor ke StyleSheet
 export default function CardDebtCredit({
-  title,
+  name,
   description,
-  amount,
-  total,
+  ammount,
+  date,
+  remaining_ammount,
   onPress,
   buttonLabel,
-  // dueDate,
 }: CardDebtCreditProps) {
   return (
     <View
@@ -42,13 +42,13 @@ export default function CardDebtCredit({
         padding: 16,
         elevation: 2,
       }}>
-      {/* Card Header */}
-      <Text style={{ fontSize: 18, fontWeight: '600' }}>{title}</Text>
+      {/* Name */}
+      <Text style={{ fontSize: 18, fontWeight: '600' }}>{name}</Text>
 
       {/* Card Description */}
       <Text style={{ fontSize: 14, color: 'gray' }}>{description}</Text>
 
-      {/* Amount and Total */}
+      {/* Ammount and remaining_ammount */}
       <View
         style={{
           marginTop: 8,
@@ -57,17 +57,17 @@ export default function CardDebtCredit({
           justifyContent: 'space-between',
         }}>
         <Text style={{ fontSize: 16, fontWeight: 'bold', color: 'red' }}>
-          Rp. {amount.toLocaleString('id-ID')}
+          Rp. {remaining_ammount.toLocaleString('id-ID')}
         </Text>
-        <Text style={{ fontSize: 12, color: 'gray' }}>of Rp. {total.toLocaleString('id-ID')}</Text>
+        <Text style={{ fontSize: 12, color: 'gray' }}>
+          of Rp. {ammount.toLocaleString('id-ID')}
+        </Text>
       </View>
 
-      {/* Due Date */}
-      {/* <View className="mt-2 flex-row items-center">
-        <Text className="ml-2 text-xs text-gray-500">
-          Due: {format(new Date(dueDate), 'MM/dd/yyyy')}
-        </Text>
-      </View> */}
+      {/* Date */}
+      <View className="mt-2 flex-row items-center">
+        <Text className="ml-2 text-xs text-gray-500">{format(new Date(date), 'MM/dd/yyyy')}</Text>
+      </View>
 
       {/* Action Button */}
       <Pressable
