@@ -11,6 +11,7 @@ import {
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { RootStackNavigationProp } from 'types/navigation';
 import { Eye, EyeOff } from 'lucide-react-native';
+import * as securestore from 'expo-secure-store';
 
 // Interface definition for wallet data structure
 // This defines the shape of each wallet object with all required properties
@@ -47,8 +48,7 @@ export default function WalletsScreen() {
       console.log('Fetching wallets from API...');
 
       // Direct API call to get wallets using token authentication
-      const token =
-        'eyJhbGciOiJIUzI1NiJ9.eyJfaWQiOiI2ODg4NmQ1MGU2MDM5YmI4NjkxZTA2OGMifQ.kDNJxvL84nLV5z-l-d_8V9mu-GuFuFOkzSBUjPB4h9A'; // Replace with actual token from auth
+      const token = await securestore.getItemAsync('access_token'); // Replace with actual token from auth
 
       const response = await fetch('https://ssa-server-omega.vercel.app/api/wallets', {
         method: 'GET',
