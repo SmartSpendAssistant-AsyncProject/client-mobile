@@ -7,8 +7,6 @@ import {
   StyleSheet,
   SafeAreaView,
   StatusBar,
-  ActivityIndicator,
-  Dimensions,
 } from 'react-native';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { RootStackNavigationProp } from '../types/navigation';
@@ -22,6 +20,7 @@ import {
   DollarSign,
 } from 'lucide-react-native';
 import { VictoryChart, VictoryLine, VictoryArea, VictoryAxis, VictoryTheme } from 'victory-native';
+import { Dimensions } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 
 //   Transaction interface for type safety
@@ -71,11 +70,11 @@ export interface TransactionData {
   message_id?: string;
   createdAt: string;
   updatedAt: string;
-  wallet: WalletData;
+  wallet: Wallet;
   category: Category;
 }
 
-export interface WalletData {
+export interface Wallet {
   _id: string;
   name: string;
   description: string;
@@ -119,11 +118,6 @@ export default function HomeScreen() {
   //   Navigation hook for screen transitions
   const navigation = useNavigation<RootStackNavigationProp>();
 
-  //   Loading states
-  const [isLoading, setIsLoading] = useState(true);
-  const [isTransactionsLoading, setIsTransactionsLoading] = useState(false);
-  const [isWalletsLoading, setIsWalletsLoading] = useState(false);
-
   //   State management for wallet data and transactions
   const [walletBalance, setWalletBalance] = useState(0);
   const [debt, setDebt] = useState(0);
@@ -132,8 +126,8 @@ export default function HomeScreen() {
   const [monthlyExpense, setMonthlyExpense] = useState(0);
 
   //   Chart data state
-  const [incomeChartData, setIncomeChartData] = useState<{ x: number; y: number }[]>([]);
-  const [expenseChartData, setExpenseChartData] = useState<{ x: number; y: number }[]>([]);
+  const [incomeChartData, setIncomeChartData] = useState<Array<{ x: number; y: number }>>([]);
+  const [expenseChartData, setExpenseChartData] = useState<Array<{ x: number; y: number }>>([]);
 
   //   Transaction data array with sample data
   const [transactions, setTransactions] = useState<Transaction[] | undefined>();
@@ -144,7 +138,6 @@ export default function HomeScreen() {
   useEffect(() => {
     const fetchTransactions = async (access_token: string) => {
       try {
-        setIsTransactionsLoading(true);
         console.log('Fetching transactions from API...');
         // Get current month and year in YYYY-MM format
         const currentDate = new Date();
@@ -249,13 +242,10 @@ export default function HomeScreen() {
         }
       } catch (error) {
         console.error('Error fetching transactions:', error);
-      } finally {
-        setIsTransactionsLoading(false);
       }
     };
     const fetchWallets = async (access_token: string) => {
       try {
-        setIsWalletsLoading(true);
         const response = await fetch(`${BASE_URL}/api/wallets`, {
           method: 'GET',
           headers: {
@@ -269,7 +259,7 @@ export default function HomeScreen() {
             navigation.navigate('CreateWallet');
           }
           const totalBalance = data.reduce(
-            (sum: number, wallet: WalletData) => sum + wallet.balance,
+            (sum: number, wallet: Wallet) => sum + wallet.balance,
             0
           );
           setWalletBalance(totalBalance);
@@ -280,22 +270,19 @@ export default function HomeScreen() {
         }
       } catch (error) {
         console.error('  Error fetching wallets:', error);
-      } finally {
-        setIsWalletsLoading(false);
       }
     };
     const fetchAllData = async () => {
-      setIsLoading(true);
       const access_token = await SecureStore.getItemAsync('access_token');
       if (access_token) {
-        await Promise.all([fetchWallets(access_token), fetchTransactions(access_token)]);
+        await fetchWallets(access_token);
+        await fetchTransactions(access_token);
       }
-      setIsLoading(false);
     };
     if (isFocused) {
       fetchAllData();
     }
-  }, [isFocused, navigation]);
+  }, [isFocused]); // Empty dependency array means this runs once when component mounts
 
   //   Navigate to different wallet management screens
   const navigateToWallets = () => navigation.navigate('Wallets');
@@ -368,76 +355,42 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Loading Overlay */}
-      {isLoading && (
-        <View style={styles.loadingOverlay}>
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#3b667c" />
-            <Text style={styles.loadingText}>Loading data...</Text>
-          </View>
-        </View>
-      )}
-
       <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         {/*   Main content container with padding */}
         <View style={styles.content}>
-          {/*   Wallet balance card section - show skeleton or content */}
-          {isWalletsLoading ? (
-            <View style={[styles.walletCard, styles.skeletonCard]}>
-              <View style={styles.skeletonLine} />
-              <View style={[styles.skeletonLine, { width: '60%', marginTop: 8 }]} />
+          {/*   Wallet balance card section - entire card is clickable */}
+          <TouchableOpacity
+            style={styles.walletCard}
+            onPress={navigateToWallets}
+            activeOpacity={0.8}>
+            <View style={styles.walletCardContent}>
+              {/* <Text style={styles.walletTitle}>Wallet one</Text> */}
+              <Text style={styles.balanceLabel}>Total balance:</Text>
+              <Text style={styles.balanceAmount}>Rp. {walletBalance.toLocaleString('id-ID')}</Text>
             </View>
-          ) : (
-            <TouchableOpacity
-              style={styles.walletCard}
-              onPress={navigateToWallets}
-              activeOpacity={0.8}>
-              <View style={styles.walletCardContent}>
-                {/* <Text style={styles.walletTitle}>Wallet one</Text> */}
-                <Text style={styles.balanceLabel}>Total balance:</Text>
-                <Text style={styles.balanceAmount}>
-                  Rp. {walletBalance.toLocaleString('id-ID')}
-                </Text>
-              </View>
 
-              {/*   Dollar sign icon positioned absolutely like the design */}
-              <View style={styles.dollarIconContainer}>
-                <Text style={styles.dollarIcon}>$</Text>
-              </View>
-            </TouchableOpacity>
-          )}
+            {/*   Dollar sign icon positioned absolutely like the design */}
+            <View style={styles.dollarIconContainer}>
+              <Text style={styles.dollarIcon}>$</Text>
+            </View>
+          </TouchableOpacity>
 
           {/*   Debt and loan cards grid */}
           <View style={styles.cardGrid}>
-            {isTransactionsLoading ? (
-              <>
-                <View style={[styles.smallCard, styles.skeletonCard]}>
-                  <View style={styles.skeletonLine} />
-                  <View style={[styles.skeletonLine, { width: '70%', marginTop: 8 }]} />
-                </View>
-                <View style={[styles.smallCard, styles.skeletonCard]}>
-                  <View style={styles.skeletonLine} />
-                  <View style={[styles.skeletonLine, { width: '70%', marginTop: 8 }]} />
-                </View>
-              </>
-            ) : (
-              <>
-                <TouchableOpacity style={styles.smallCard} onPress={navigateToDebt}>
-                  <View style={styles.cardHeader}>
-                    <CreditCard size={20} color="#FFFFFF" />
-                    <Text style={styles.cardLabel}>Debt</Text>
-                  </View>
-                  <Text style={styles.cardAmount}>Rp. {debt.toLocaleString('id-ID')}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.smallCard} onPress={navigateToLoan}>
-                  <View style={styles.cardHeader}>
-                    <DollarSign size={20} color="#FFFFFF" />
-                    <Text style={styles.cardLabel}>Loan</Text>
-                  </View>
-                  <Text style={styles.cardAmount}>Rp. {loan.toLocaleString('id-ID')}</Text>
-                </TouchableOpacity>
-              </>
-            )}
+            <TouchableOpacity style={styles.smallCard} onPress={navigateToDebt}>
+              <View style={styles.cardHeader}>
+                <CreditCard size={20} color="#FFFFFF" />
+                <Text style={styles.cardLabel}>Debt</Text>
+              </View>
+              <Text style={styles.cardAmount}>Rp. {debt.toLocaleString('id-ID')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.smallCard} onPress={navigateToLoan}>
+              <View style={styles.cardHeader}>
+                <DollarSign size={20} color="#FFFFFF" />
+                <Text style={styles.cardLabel}>Loan</Text>
+              </View>
+              <Text style={styles.cardAmount}>Rp. {loan.toLocaleString('id-ID')}</Text>
+            </TouchableOpacity>
           </View>
 
           {/*   Monthly activities header */}
@@ -445,37 +398,20 @@ export default function HomeScreen() {
 
           {/*   Income and expense cards grid */}
           <View style={styles.cardGrid}>
-            {isTransactionsLoading ? (
-              <>
-                <View style={[styles.smallCard, styles.skeletonCard]}>
-                  <View style={styles.skeletonLine} />
-                  <View style={[styles.skeletonLine, { width: '70%', marginTop: 8 }]} />
-                </View>
-                <View style={[styles.smallCard, styles.skeletonCard]}>
-                  <View style={styles.skeletonLine} />
-                  <View style={[styles.skeletonLine, { width: '70%', marginTop: 8 }]} />
-                </View>
-              </>
-            ) : (
-              <>
-                <View style={[styles.smallCard, styles.incomeCard]}>
-                  <View style={styles.cardHeader}>
-                    <TrendingUp size={20} color="#FFFFFF" />
-                    <Text style={styles.cardLabel}>Income</Text>
-                  </View>
-                  <Text style={styles.cardAmount}>Rp. {monthlyIncome.toLocaleString('id-ID')}</Text>
-                </View>
-                <View style={[styles.smallCard, styles.expenseCard]}>
-                  <View style={styles.cardHeader}>
-                    <TrendingDown size={20} color="#FFFFFF" />
-                    <Text style={styles.cardLabel}>Expense</Text>
-                  </View>
-                  <Text style={styles.cardAmount}>
-                    Rp. {monthlyExpense.toLocaleString('id-ID')}
-                  </Text>
-                </View>
-              </>
-            )}
+            <View style={[styles.smallCard, styles.incomeCard]}>
+              <View style={styles.cardHeader}>
+                <TrendingUp size={20} color="#FFFFFF" />
+                <Text style={styles.cardLabel}>Income</Text>
+              </View>
+              <Text style={styles.cardAmount}>Rp. {monthlyIncome.toLocaleString('id-ID')}</Text>
+            </View>
+            <View style={[styles.smallCard, styles.expenseCard]}>
+              <View style={styles.cardHeader}>
+                <TrendingDown size={20} color="#FFFFFF" />
+                <Text style={styles.cardLabel}>Expense</Text>
+              </View>
+              <Text style={styles.cardAmount}>Rp. {monthlyExpense.toLocaleString('id-ID')}</Text>
+            </View>
           </View>
 
           {/*   Daily Transaction Chart */}
@@ -487,12 +423,7 @@ export default function HomeScreen() {
               </Text>
             </View>
 
-            {isTransactionsLoading ? (
-              <View style={styles.chartPlaceholder}>
-                <ActivityIndicator size="large" color="#3b667c" />
-                <Text style={styles.placeholderText}>Loading chart data...</Text>
-              </View>
-            ) : incomeChartData.length > 0 && expenseChartData.length > 0 ? (
+            {incomeChartData.length > 0 && expenseChartData.length > 0 ? (
               <VictoryChart
                 theme={VictoryTheme.material}
                 height={200}
@@ -571,7 +502,7 @@ export default function HomeScreen() {
               </VictoryChart>
             ) : (
               <View style={styles.chartPlaceholder}>
-                <Text style={styles.placeholderText}>No chart data available</Text>
+                <Text style={styles.placeholderText}>Loading chart data...</Text>
               </View>
             )}
 
@@ -595,57 +526,35 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
           <View style={styles.transactionList}>
-            {isTransactionsLoading ? (
-              // Skeleton loading for transactions
-              [1, 2, 3].map((item) => (
-                <View key={item} style={[styles.transactionCard, styles.skeletonCard]}>
+            {transactions?.map((transaction) => {
+              //   Individual transaction card with press handler
+              return (
+                <TouchableOpacity
+                  key={transaction.id}
+                  style={[styles.transactionCard, { backgroundColor: transaction.bgColor }]}
+                  onPress={() => navigateToUpdate(transaction.id)}
+                  activeOpacity={0.7}>
                   <View style={styles.transactionContent}>
                     <View style={styles.transactionInfo}>
-                      <View style={styles.skeletonLine} />
-                      <View style={[styles.skeletonLine, { width: '80%', marginTop: 8 }]} />
+                      <Text style={styles.transactionCategory}>{transaction.category}</Text>
+                      <Text style={styles.transactionDescription}>{transaction.name}</Text>
                     </View>
                     <View style={styles.transactionAmountContainer}>
-                      <View style={[styles.skeletonLine, { width: 80 }]} />
-                      <View style={[styles.skeletonLine, { width: 60, marginTop: 4 }]} />
+                      <Text
+                        style={[
+                          styles.transactionAmount,
+                          transaction.type === 'income' || transaction.type === 'debt'
+                            ? styles.incomeAmount
+                            : styles.expenseAmount,
+                        ]}>
+                        Rp. {transaction.amount}
+                      </Text>
+                      <Text style={styles.tapHint}>{transaction.date}</Text>
                     </View>
                   </View>
-                </View>
-              ))
-            ) : transactions?.length ? (
-              transactions.map((transaction) => {
-                //   Individual transaction card with press handler
-                return (
-                  <TouchableOpacity
-                    key={transaction.id}
-                    style={[styles.transactionCard, { backgroundColor: transaction.bgColor }]}
-                    onPress={() => navigateToUpdate(transaction.id)}
-                    activeOpacity={0.7}>
-                    <View style={styles.transactionContent}>
-                      <View style={styles.transactionInfo}>
-                        <Text style={styles.transactionCategory}>{transaction.category}</Text>
-                        <Text style={styles.transactionDescription}>{transaction.name}</Text>
-                      </View>
-                      <View style={styles.transactionAmountContainer}>
-                        <Text
-                          style={[
-                            styles.transactionAmount,
-                            transaction.type === 'income' || transaction.type === 'debt'
-                              ? styles.incomeAmount
-                              : styles.expenseAmount,
-                          ]}>
-                          Rp. {transaction.amount}
-                        </Text>
-                        <Text style={styles.tapHint}>{transaction.date}</Text>
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                );
-              })
-            ) : (
-              <View style={styles.chartPlaceholder}>
-                <Text style={styles.placeholderText}>No recent transactions</Text>
-              </View>
-            )}
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
       </ScrollView>
@@ -900,46 +809,5 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#9CA3AF',
     fontStyle: 'italic',
-  },
-
-  //   Loading styles
-  loadingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
-  },
-  loadingContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 24,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 16,
-    color: '#1F2937',
-    fontWeight: '500',
-  },
-
-  //   Skeleton loading styles
-  skeletonCard: {
-    backgroundColor: '#F9FAFB',
-  },
-  skeletonLine: {
-    height: 16,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 8,
-    width: '100%',
   },
 });
