@@ -563,7 +563,7 @@ export default function ChatScreen() {
                     textAlign: 'center',
                   }}
                   numberOfLines={1}>
-                  ${selectedWallet.balance.toFixed(2)}
+                  Rp. {selectedWallet.balance.toFixed(2)}
                 </Text>
               )}
             </View>
@@ -626,7 +626,7 @@ export default function ChatScreen() {
                           fontSize: 12,
                           marginTop: 2,
                         }}>
-                        ${wallet.balance.toFixed(2)} • {wallet.type}
+                        Rp. {wallet.balance} • {wallet.type}
                       </Text>
                     </TouchableOpacity>
                   ))
