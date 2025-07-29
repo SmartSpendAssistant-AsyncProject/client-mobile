@@ -8,8 +8,10 @@ export type RootStackParamList = {
   Wallets: undefined;
   CreateWallet: undefined;
   Debt: undefined;
+  DebtDetail: { debtId: string };
   Repayment: { debtItem: DebtLoanItem };
   Loan: undefined;
+  LoanDetail: { loanId: string };
   DebtCollection: { loanItem: DebtLoanItem };
   Report: undefined;
   Create: undefined;

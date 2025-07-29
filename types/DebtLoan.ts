@@ -8,6 +8,20 @@ export interface Category {
   updatedAt: string;
 }
 
+export interface Wallet {
+  _id: string;
+  name: string;
+  description: string;
+  type: string;
+  balance: number;
+  target: number;
+  threshold: number;
+  user_id: string;
+  createdAt: string;
+  updatedAt: string;
+  isDeleted: boolean;
+}
+
 export interface DebtLoanItem {
   _id: string;
   name: string;
@@ -22,6 +36,11 @@ export interface DebtLoanItem {
   createdAt: string;
   updatedAt: string;
   category: Category;
+}
+
+export interface DebtLoanDetailItem extends DebtLoanItem {
+  wallet: Wallet;
+  children: DebtLoanItem[];
 }
 
 // API Response types

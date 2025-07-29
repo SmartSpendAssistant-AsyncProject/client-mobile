@@ -79,6 +79,7 @@ export default function DebtScreen() {
                 date={debt.date}
                 remaining_ammount={debt.remaining_ammount}
                 onPress={() => navigation.navigate('Repayment', { debtItem: debt })}
+                onDetailPress={() => navigation.navigate('DebtDetail', { debtId: debt._id })}
                 buttonLabel="Repay now"
               />
             ))

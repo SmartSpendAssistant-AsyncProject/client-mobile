@@ -1,5 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
-import { DebtLoanItem } from 'types/DebtLoan';
+import { DebtLoanItem, DebtLoanDetailItem } from 'types/DebtLoan';
 
 const BASE_URL = 'https://ssa-server-omega.vercel.app';
 
@@ -69,6 +69,10 @@ class DebtLoanService {
 
   static async getWallets(): Promise<Wallet[]> {
     return this.makeRequest<Wallet[]>('/api/wallets');
+  }
+
+  static async getTransactionDetail(id: string): Promise<DebtLoanDetailItem> {
+    return this.makeRequest<DebtLoanDetailItem>(`/api/transactions/${id}`);
   }
 
   static async createRepayment(data: RepaymentData): Promise<any> {
