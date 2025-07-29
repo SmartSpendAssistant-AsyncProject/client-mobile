@@ -1,5 +1,5 @@
 // Local server for voice transcription, Vercel for AI chat
-const TRANSCRIBE_BASE_URL = 'http://192.168.1.2:3000/api';
+const TRANSCRIBE_BASE_URL = 'https://ssa-server-omega.vercel.app/api';
 const AI_CHAT_BASE_URL = 'https://ssa-server-omega.vercel.app/api';
 
 //   Interface for transcription API response
@@ -57,9 +57,9 @@ export class VoiceApiService {
       //   Extract and validate transcribed text
       if (transcriptionData.transcription) {
         const transcription = transcriptionData.transcription.trim();
-        
+
         console.log('🎙️ Raw transcription:', transcription);
-        
+
         // Algorithm: Validate transcription quality
         if (this.isValidTranscription(transcription)) {
           console.log('✅ Audio transcription successful');
@@ -166,7 +166,7 @@ export class VoiceApiService {
   static isValidTranscription(transcription: string): boolean {
     // Remove whitespace and convert to lowercase for analysis
     const cleanText = transcription.trim().toLowerCase();
-    
+
     // Algorithm: Check minimum length (very short transcriptions are often noise)
     if (cleanText.length < 3) {
       console.log('❌ Transcription too short:', cleanText.length, 'characters');
@@ -212,10 +212,10 @@ export class VoiceApiService {
     const words = cleanText.split(/\s+/);
     if (words.length > 1) {
       const wordCounts = new Map();
-      words.forEach(word => {
+      words.forEach((word) => {
         wordCounts.set(word, (wordCounts.get(word) || 0) + 1);
       });
-      
+
       // If any word appears more than 50% of the time, likely noise
       const maxCount = Math.max(...wordCounts.values());
       const repetitionRatio = maxCount / words.length;
@@ -228,7 +228,7 @@ export class VoiceApiService {
     // Algorithm: Check for meaningful content (contains some vowels and consonants)
     const hasVowels = /[aiueo]/i.test(cleanText);
     const hasConsonants = /[bcdfghjklmnpqrstvwxyz]/i.test(cleanText);
-    
+
     if (!hasVowels || !hasConsonants) {
       console.log('❌ Text lacks meaningful structure (vowels/consonants)');
       return false;
