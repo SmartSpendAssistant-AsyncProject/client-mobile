@@ -1,4 +1,5 @@
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { DebtLoanItem } from './DebtLoan';
 
 export type RootStackParamList = {
   Login: undefined;
@@ -7,9 +8,9 @@ export type RootStackParamList = {
   Wallets: undefined;
   CreateWallet: undefined;
   Debt: undefined;
-  Repayment: undefined;
+  Repayment: { debtItem: DebtLoanItem };
   Loan: undefined;
-  DebtCollection: undefined;
+  DebtCollection: { loanItem: DebtLoanItem };
   Report: undefined;
   Create: undefined;
   Update: { _id: string };

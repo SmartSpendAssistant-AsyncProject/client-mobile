@@ -1,66 +1,55 @@
-import React from 'react';
-import { View, Text, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { RootStackNavigationProp } from 'types/navigation';
+import { DebtLoanItem } from 'types/DebtLoan';
+import DebtLoanService from 'utils/DebtLoanService';
 import CardDebtCredit from 'components/CardDebtCredit';
 
 export default function DebtScreen() {
-  //! Sample data untuk debt guys
-  const debtData = [
-    {
-      title: 'Credit Card - BCA',
-      description: 'Monthly credit card payment',
-      amount: 4600000,
-      total: 5000000,
-      dueDate: '2024-02-15',
-      interest: 2.5,
-      paidPercentage: 96,
-      status: 'Overdue' as const,
-    },
-    {
-      title: 'Hutang ke teman - Amar',
-      description: 'Amar suka meminjamkan uang',
-      amount: 19000000,
-      total: 20000000,
-      dueDate: '2024-02-28',
-      interest: 1.8,
-      paidPercentage: 90,
-      status: 'Due Soon' as const,
-    },
-    {
-      title: 'Hutang yang terlupakan',
-      description: 'Home renovation loan',
-      amount: 1500000,
-      total: 15000000,
-      dueDate: '2024-02-28',
-      interest: 1.8,
-      paidPercentage: 10,
-      status: 'Due Soon' as const,
-    },
-    {
-      title: 'Hutang ke beli Playstation 7',
-      description: 'Home renovation loan',
-      amount: 1500000,
-      total: 15000000,
-      dueDate: '2024-02-28',
-      interest: 1.8,
-      paidPercentage: 10,
-      status: 'Due Soon' as const,
-    },
-    {
-      title: 'Hutang ke tukang sayur',
-      description: 'Home renovation loan',
-      amount: 1500000,
-      total: 15000000,
-      dueDate: '2024-02-28',
-      interest: 1.8,
-      paidPercentage: 10,
-      status: 'Due Soon' as const,
-    },
-  ];
-
+  const [debtData, setDebtData] = useState<DebtLoanItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const navigation = useNavigation<RootStackNavigationProp>();
+
+  useEffect(() => {
+    fetchDebts();
+  }, []);
+
+  const fetchDebts = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const data = await DebtLoanService.getDebts();
+      setDebtData(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch debts');
+      console.error('Error fetching debts:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#3b667c" />
+        <Text style={{ marginTop: 16, fontSize: 16, color: 'gray' }}>Loading debts...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Text style={{ fontSize: 16, color: 'red', textAlign: 'center', paddingHorizontal: 20 }}>
+          Error: {error}
+        </Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
@@ -76,14 +65,24 @@ export default function DebtScreen() {
         </Text>
 
         <ScrollView showsVerticalScrollIndicator={false}>
-          {debtData.map((debt, index) => (
-            <CardDebtCredit
-              key={index}
-              {...debt}
-              onPress={() => navigation.navigate('Repayment')}
-              buttonLabel="Repay now"
-            />
-          ))}
+          {debtData.length === 0 ? (
+            <View style={{ alignItems: 'center', paddingTop: 50 }}>
+              <Text style={{ fontSize: 16, color: 'gray' }}>No debts found</Text>
+            </View>
+          ) : (
+            debtData.map((debt) => (
+              <CardDebtCredit
+                key={debt._id}
+                name={debt.name}
+                description={debt.description}
+                ammount={debt.ammount}
+                date={debt.date}
+                remaining_ammount={debt.remaining_ammount}
+                onPress={() => navigation.navigate('Repayment', { debtItem: debt })}
+                buttonLabel="Repay now"
+              />
+            ))
+          )}
         </ScrollView>
       </View>
     </SafeAreaView>
