@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { RootStackNavigationProp } from 'types/navigation';
+import CardDebtCredit from '../components/CardDebtCredit';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { RootStackNavigationProp } from 'types/navigation';
 import { DebtLoanItem } from 'types/DebtLoan';
