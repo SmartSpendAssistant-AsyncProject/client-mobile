@@ -9,6 +9,7 @@ import {
   SafeAreaView,
   Alert,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { RootStackNavigationProp } from '../types/navigation';
@@ -52,10 +53,17 @@ export default function CreateScreen() {
   const [category, setCategory] = useState<string>('');
   const [wallet, setWallet] = useState<string>('');
   const [wallets, setWallets] = useState<{ label: string; value: string }[]>([]);
-  const [categories, setCategories] = useState<{ label: string; value: string }[]>([]);
+  const [incomeCategories, setIncomeCategories] = useState<{ label: string; value: string }[]>([]);
+  const [expenseCategories, setExpenseCategories] = useState<{ label: string; value: string }[]>(
+    []
+  );
+  const [transactionType, setTransactionType] = useState<'income' | 'expense'>('expense');
 
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [showWalletDropdown, setShowWalletDropdown] = useState(false);
+  const [showTypeDropdown, setShowTypeDropdown] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   const isFocused = useIsFocused();
 
@@ -83,19 +91,39 @@ export default function CreateScreen() {
       });
       if (response.ok) {
         const data = await response.json();
-        const categoryOptions = data.map((category: { _id: string; name: string }) => ({
-          label: category.name,
-          value: category._id,
-        }));
-        setCategories(categoryOptions);
+        const categoryOptions = data.map(
+          (category: { _id: string; name: string; type?: string }) => ({
+            label: category.name,
+            value: category._id,
+            type: category.type || 'expense', // Default to expense if no type
+          })
+        );
+
+        // Separate categories by type
+        const income = categoryOptions.filter(
+          (cat: { label: string; value: string; type: string }) => cat.type === 'income'
+        );
+        const expense = categoryOptions.filter(
+          (cat: { label: string; value: string; type: string }) => cat.type === 'expense'
+        );
+        setIncomeCategories(income);
+        setExpenseCategories(expense);
       }
     };
     const fetchInitialData = async () => {
-      const token = await SecureStore.getItemAsync('access_token');
-      if (token) {
-        setToken(token);
-        await fetchWallets(token);
-        await fetchCategories(token);
+      setIsInitialLoading(true);
+      try {
+        const token = await SecureStore.getItemAsync('access_token');
+        if (token) {
+          setToken(token);
+          await fetchWallets(token);
+          await fetchCategories(token);
+        }
+      } catch (error) {
+        console.error('Error fetching initial data:', error);
+        Alert.alert('Error', 'Failed to load data. Please try again.');
+      } finally {
+        setIsInitialLoading(false);
       }
     };
     if (isFocused) {
@@ -108,9 +136,10 @@ export default function CreateScreen() {
       setWalletId('');
       setCategory('');
       setWallet('');
-      setCategory('');
+      setTransactionType('expense');
       setShowCategoryDropdown(false);
       setShowWalletDropdown(false);
+      setShowTypeDropdown(false);
     }
   }, [isFocused]);
 
@@ -148,6 +177,20 @@ export default function CreateScreen() {
     setShowCategoryDropdown(false);
   };
 
+  //   Transaction type selection handler
+  const handleTypeSelect = (type: 'income' | 'expense') => {
+    setTransactionType(type);
+    setShowTypeDropdown(false);
+    // Reset category when type changes
+    setCategoryId('');
+    setCategory('');
+  };
+
+  //   Get categories based on transaction type
+  const getCurrentCategories = () => {
+    return transactionType === 'income' ? incomeCategories : expenseCategories;
+  };
+
   //   Wallet selection handler
   const handleWalletSelect = (wallet: { label: string; value: string }) => {
     setWalletId(wallet.value);
@@ -162,27 +205,64 @@ export default function CreateScreen() {
 
   //   Add transaction handler with validation and navigation
   const handleAddTransaction = async () => {
-    const response = await fetch(`${BASE_URL}/api/transactions`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        name,
-        description,
-        ammount: Number(ammount),
-        date,
-        category_id: categoryId,
-        wallet_id: walletId,
-      }),
-    });
-    if (!response.ok) {
-      const error = await response.json();
-      Alert.alert('Error', error.message || 'Failed to add transaction');
-      return;
-    } else {
-      navigation.navigate('Home');
+    // Prevent multiple submissions
+    if (isLoading) return;
+
+    setIsLoading(true);
+
+    try {
+      // Validate required fields
+      if (!name.trim()) {
+        Alert.alert('Validation Error', 'Transaction name is required');
+        return;
+      }
+      if (!ammount || ammount <= 0) {
+        Alert.alert('Validation Error', 'Amount must be greater than 0');
+        return;
+      }
+      if (!categoryId) {
+        Alert.alert('Validation Error', 'Please select a category');
+        return;
+      }
+      if (!walletId) {
+        Alert.alert('Validation Error', 'Please select a wallet');
+        return;
+      }
+
+      const response = await fetch(`${BASE_URL}/api/transactions`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name,
+          description,
+          ammount: Number(ammount),
+          date,
+          category_id: categoryId,
+          wallet_id: walletId,
+          type: transactionType,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        Alert.alert('Error', error.message || 'Failed to add transaction');
+        return;
+      }
+
+      Alert.alert('Success', 'Transaction added successfully', [
+        {
+          text: 'OK',
+          onPress: () => navigation.navigate('Home'),
+        },
+      ]);
+    } catch (error) {
+      console.error('Transaction error:', error);
+      Alert.alert('Error', 'Network error. Please check your connection and try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -201,6 +281,29 @@ export default function CreateScreen() {
             key={item.value}
             style={styles.dropdownItem}
             onPress={() => onSelect(item)}>
+            <Text style={styles.dropdownItemText}>{item.label}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    );
+  };
+
+  //   Custom dropdown for transaction type
+  const renderTypeDropdown = (show: boolean, onSelect: (type: 'income' | 'expense') => void) => {
+    if (!show) return null;
+
+    const typeOptions = [
+      { label: 'Income', value: 'income' },
+      { label: 'Expense', value: 'expense' },
+    ];
+
+    return (
+      <View style={styles.dropdownContainer}>
+        {typeOptions.map((item) => (
+          <TouchableOpacity
+            key={item.value}
+            style={styles.dropdownItem}
+            onPress={() => onSelect(item.value as 'income' | 'expense')}>
             <Text style={styles.dropdownItemText}>{item.label}</Text>
           </TouchableOpacity>
         ))}
@@ -227,6 +330,7 @@ export default function CreateScreen() {
               onChangeText={(value) => setName(value)}
               placeholder="Enter name"
               placeholderTextColor="#D1D5DB"
+              editable={!isInitialLoading}
             />
           </View>
           {/*   Amount input field */}
@@ -241,6 +345,7 @@ export default function CreateScreen() {
                 placeholder="0"
                 placeholderTextColor="#9CA3AF"
                 keyboardType="numeric"
+                editable={!isInitialLoading}
               />
             </View>
           </View>
@@ -254,6 +359,7 @@ export default function CreateScreen() {
               onChangeText={(value) => setDescription(value)}
               placeholder="Enter description"
               placeholderTextColor="#D1D5DB"
+              editable={!isInitialLoading}
             />
           </View>
 
@@ -280,6 +386,33 @@ export default function CreateScreen() {
             />
           )}
 
+          {/*   Transaction Type selector field */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Transaction Type</Text>
+            <TouchableOpacity
+              style={styles.selectInput}
+              onPress={() => {
+                setShowTypeDropdown(!showTypeDropdown);
+                setShowCategoryDropdown(false);
+                setShowWalletDropdown(false);
+              }}>
+              <Text
+                style={[
+                  styles.selectText,
+                  transactionType ? styles.selectedText : styles.placeholderText,
+                ]}>
+                {transactionType === 'income' ? 'Income' : 'Expense'}
+              </Text>
+              <ChevronDown
+                size={20}
+                color="#9CA3AF"
+                style={[styles.chevronIcon, showTypeDropdown && styles.chevronRotated]}
+              />
+            </TouchableOpacity>
+            {/*   Transaction type dropdown options */}
+            {renderTypeDropdown(showTypeDropdown, handleTypeSelect)}
+          </View>
+
           {/*   Category selector field with dropdown */}
           <View style={styles.inputGroup}>
             <View style={styles.labelWithButton}>
@@ -294,13 +427,14 @@ export default function CreateScreen() {
               onPress={() => {
                 setShowCategoryDropdown(!showCategoryDropdown);
                 setShowWalletDropdown(false); // Close other dropdown
+                setShowTypeDropdown(false); // Close type dropdown
               }}>
               <Text
                 style={[
                   styles.selectText,
                   category ? styles.selectedText : styles.placeholderText,
                 ]}>
-                {category || 'Select category'}
+                {category || `Select ${transactionType} category`}
               </Text>
               <ChevronDown
                 size={20}
@@ -308,8 +442,8 @@ export default function CreateScreen() {
                 style={[styles.chevronIcon, showCategoryDropdown && styles.chevronRotated]}
               />
             </TouchableOpacity>
-            {/*   Category dropdown options */}
-            {renderDropdown(showCategoryDropdown, categories, handleCategorySelect)}
+            {/*   Category dropdown options - filtered by transaction type */}
+            {renderDropdown(showCategoryDropdown, getCurrentCategories(), handleCategorySelect)}
           </View>
 
           {/*   Wallet selector field with dropdown */}
@@ -319,7 +453,8 @@ export default function CreateScreen() {
               style={styles.selectInput}
               onPress={() => {
                 setShowWalletDropdown(!showWalletDropdown);
-                setShowCategoryDropdown(false); // Close other dropdown
+                setShowCategoryDropdown(false); // Close category dropdown
+                setShowTypeDropdown(false); // Close type dropdown
               }}>
               <Text
                 style={[styles.selectText, wallet ? styles.selectedText : styles.placeholderText]}>
@@ -337,12 +472,32 @@ export default function CreateScreen() {
 
           {/*   Add transaction submit button */}
           <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.addButton} onPress={handleAddTransaction}>
-              <Text style={styles.addButtonText}>Add Transaction</Text>
+            <TouchableOpacity
+              style={[styles.addButton, isLoading && styles.addButtonDisabled]}
+              onPress={handleAddTransaction}
+              disabled={isLoading}>
+              {isLoading ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                  <Text style={styles.addButtonText}>Saving...</Text>
+                </View>
+              ) : (
+                <Text style={styles.addButtonText}>Add Transaction</Text>
+              )}
             </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
+
+      {/* Initial Loading Overlay */}
+      {isInitialLoading && (
+        <View style={styles.loadingOverlay}>
+          <View style={styles.loadingContent}>
+            <ActivityIndicator size="large" color="#3b667c" />
+            <Text style={styles.loadingText}>Loading data...</Text>
+          </View>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -508,9 +663,45 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     height: 48,
   },
+  addButtonDisabled: {
+    backgroundColor: '#9CA3AF', // Gray when disabled
+    opacity: 0.7,
+  },
   addButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
+    fontWeight: '500',
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+
+  //   Loading overlay styles
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  loadingContent: {
+    backgroundColor: '#FFFFFF',
+    padding: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    gap: 12,
+    minWidth: 120,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#374151',
     fontWeight: '500',
   },
 
