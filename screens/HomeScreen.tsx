@@ -256,6 +256,9 @@ export default function HomeScreen() {
         });
         if (response.ok) {
           const data = await response.json();
+          if (!data || data.length === 0) {
+            navigation.navigate('CreateWallet');
+          }
           const totalBalance = data.reduce(
             (sum: number, wallet: Wallet) => sum + wallet.balance,
             0
@@ -273,8 +276,8 @@ export default function HomeScreen() {
     const fetchAllData = async () => {
       const access_token = await SecureStore.getItemAsync('access_token');
       if (access_token) {
-        fetchTransactions(access_token);
-        fetchWallets(access_token);
+        await fetchWallets(access_token);
+        await fetchTransactions(access_token);
       }
     };
     if (isFocused) {
