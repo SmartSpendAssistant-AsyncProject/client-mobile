@@ -12,7 +12,6 @@ import { useNavigation } from '@react-navigation/native';
 import { RootStackNavigationProp } from '../types/navigation';
 import * as SecureStore from 'expo-secure-store';
 
-
 export default function ProfileScreen() {
   // ALGORITMANYA: Navigation and State Management
   // Line 1: Initialize navigation hook for screen transitions
@@ -32,13 +31,13 @@ export default function ProfileScreen() {
   // Line 8: Loading state for database operations
   const [isLoading, setIsLoading] = useState(false);
 
-  // ALGORITHM: Data Fetching Effect
+  //   Data Fetching Effect
   // Line 9: Fetch user profile data on component mount
   useEffect(() => {
     fetchUserProfile();
   }, []);
 
-  // ALGORITHM: Database Integration Functions
+  //   Database Integration Functions
   // Line 10: Fetch user profile from database
   const fetchUserProfile = async () => {
     try {
@@ -55,7 +54,7 @@ export default function ProfileScreen() {
     }
   };
 
-  // ALGORITHM: Upgrade Plan Handler
+  //   Upgrade Plan Handler
   // Line 11: Handle plan upgrade navigation
   const handleUpgradePlan = async () => {
     const response = await fetch('https://ssa-server-omega.vercel.app/api/payments', {
@@ -71,7 +70,7 @@ export default function ProfileScreen() {
     }
   };
 
-  // ALGORITHM: Edit Profile Handler
+  //   Edit Profile Handler
   // Line 12: Navigate to edit profile screen
   const handleEditProfile = () => {
     // TODO: Navigate to edit profile screen
@@ -79,7 +78,7 @@ export default function ProfileScreen() {
     // navigation.navigate('EditProfile');
   };
 
-  // ALGORITHM: Sign Out Handler
+  //   Sign Out Handler
   // Line 13: Handle user logout with confirmation
   const handleSignOut = () => {
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
@@ -109,12 +108,11 @@ export default function ProfileScreen() {
     ]);
   };
 
-
   return (
-    // ALGORITHM: Main Container Setup
+    //   Main Container Setup
     // Line 14: SafeAreaView ensures content stays within device safe boundaries
     <SafeAreaView style={styles.container}>
-      {/* ALGORITHM: Header Section */}
+      {/*   Header Section */}
       {/* Line 15: Fixed header with title */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Profile</Text>
@@ -122,7 +120,7 @@ export default function ProfileScreen() {
 
       {/* Line 16: Scrollable content container */}
       <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-        {/* ALGORITHM: Profile Information Section */}
+        {/*   Profile Information Section */}
         {/* Line 17-19: User profile display with avatar and basic info */}
         <View style={styles.profileSection}>
           <View style={styles.profileHeader}>
@@ -147,7 +145,7 @@ export default function ProfileScreen() {
             </View>
           </View>
 
-          {/* ALGORITHM: Plan Information Section */}
+          {/*   Plan Information Section */}
           {/* Line 20-22: Current plan display with upgrade option */}
           <View style={styles.planSection}>
             <View style={styles.planHeader}>
@@ -165,7 +163,7 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {/* ALGORITHM: Statistics Section */}
+        {/*   Statistics Section */}
         {/* Line 23-25: User statistics display with database-driven values */}
         <View style={styles.statsSection}>
           <View style={styles.statItem}>
@@ -184,7 +182,7 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {/* ALGORITHM: Sign Out Section */}
+        {/*   Sign Out Section */}
         {/* Line 26-28: Sign out button with confirmation dialog */}
         <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
           <Text style={styles.signOutIcon}>↗️</Text>

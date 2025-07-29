@@ -24,7 +24,7 @@ export default function WalletsScreen() {
   // State for balance visibility toggle
   const [isBalanceVisible, setIsBalanceVisible] = useState(true);
 
-  // ALGORITHM: Static wallet data structure
+  //   Static wallet data structure
   // In a real app, this would come from:
   // 1. AsyncStorage for local persistence
   // 2. API calls to backend server
@@ -71,7 +71,7 @@ export default function WalletsScreen() {
     },
   ];
 
-  // ALGORITHM: Currency formatting utility
+  //   Currency formatting utility
   // Converts raw number to Indonesian Rupiah format
   // Input: 1500000 → Output: "1.500.000"
   // Uses Indonesian locale for proper thousand separators (dots instead of commas)
@@ -79,7 +79,7 @@ export default function WalletsScreen() {
     return amount.toLocaleString('id-ID');
   };
 
-  // ALGORITHM: Balance display utility
+  //   Balance display utility
   // Shows actual balance or asterisks based on visibility state
   const displayBalance = (amount: number): string => {
     if (isBalanceVisible) {
@@ -89,7 +89,7 @@ export default function WalletsScreen() {
     return '******';
   };
 
-  // ALGORITHM: Wallet item renderer
+  //   Wallet item renderer
   // Creates individual wallet components with:
   // 1. Left section: Icon + wallet info (name, type, default badge)
   // 2. Right section: Currency + formatted balance + menu button
@@ -150,7 +150,7 @@ export default function WalletsScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* ALGORITHM: List rendering with map function */}
+        {/*   List rendering with map function */}
         {/* Maps through wallets array and renders each item */}
         {/* Uses ScrollView for vertical scrolling when list is long */}
         <ScrollView style={styles.walletsList}>{wallets.map(renderWalletItem)}</ScrollView>
