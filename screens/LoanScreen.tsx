@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { RootStackNavigationProp } from 'types/navigation';
+import CardDebtCredit from '../components/CardDebtCredit';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
 import { DebtLoanItem } from 'types/DebtLoan';
 import DebtLoanService from 'utils/DebtLoanService';
-import CardDebtCredit from 'components/CardDebtCredit';
 
 export default function LoanScreen() {
   const [loanData, setLoanData] = useState<DebtLoanItem[]>([]);

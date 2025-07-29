@@ -1,19 +1,31 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { RootStackNavigationProp } from 'types/navigation';
 import { Eye, EyeOff } from 'lucide-react-native';
+import * as securestore from 'expo-secure-store';
 
 // Interface definition for wallet data structure
 // This defines the shape of each wallet object with all required properties
 interface WalletItem {
-  id: string; // Unique identifier for each wallet
+  _id: string; // MongoDB ObjectId
   name: string; // Display name of the wallet
   type: string; // Type category (Cash, Saving, Investment, etc.)
   balance: number; // Current balance as a number for calculations
-  currency: string; // Currency symbol (Rp., $, €, etc.)
-  color: string; // Hex color code for the wallet icon background
-
+  currency?: string; // Currency symbol (Rp., $, €, etc.) - optional as it may not come from API
+  color?: string; // Hex color code for the wallet icon background - optional
+  description?: string; // Optional description
+  target?: number; // Optional target amount
+  threshold?: number; // Optional threshold amount
+  user_id: string; // User ID from database
   isDefault?: boolean; // Optional flag to mark the primary/default wallet
 }
 
@@ -23,53 +35,85 @@ export default function WalletsScreen() {
 
   // State for balance visibility toggle
   const [isBalanceVisible, setIsBalanceVisible] = useState(true);
+  // State for wallets data from API
+  const [wallets, setWallets] = useState<WalletItem[]>([]);
+  // State for loading indicator
+  const [isLoading, setIsLoading] = useState(true);
 
-  //   Static wallet data structure
-  // In a real app, this would come from:
-  // 1. AsyncStorage for local persistence
-  // 2. API calls to backend server
-  // 3. State management (Redux, Zustand, Context)
-  // 4. Database query results
-  const wallets: WalletItem[] = [
-    // Main spending wallet - typically checking account or daily cash
-    {
-      id: '1',
-      name: 'Main Wallet',
-      type: 'Cash',
-      balance: 1500000,
-      currency: 'Rp.',
-      color: '#2C5F6F',
+  // Function to fetch wallets from API
+  const fetchWallets = async () => {
+    try {
+      setIsLoading(true);
 
-      isDefault: true, // Primary wallet for transactions
-    },
-    // Long-term savings account - higher balance, less frequent access
-    {
-      id: '2',
-      name: 'Savings Account',
-      type: 'Saving',
-      balance: 15000000,
-      currency: 'Rp.',
-      color: '#4CAF50',
-    },
-    // Emergency fund - separate savings for unexpected expenses
-    {
-      id: '3',
-      name: 'Emergency Fund',
-      type: 'Saving',
-      balance: 5000000,
-      currency: 'Rp.',
-      color: '#FF9800',
-    },
-    // Investment portfolio - highest balance, long-term growth
-    {
-      id: '4',
-      name: 'Investment',
-      type: 'Saving',
-      balance: 25000000,
-      currency: 'Rp.',
-      color: '#9C27B0',
-    },
-  ];
+      console.log('Fetching wallets from API...');
+
+      // Direct API call to get wallets using token authentication
+      const token = await securestore.getItemAsync('access_token'); // Replace with actual token from auth
+
+      const response = await fetch('https://ssa-server-omega.vercel.app/api/wallets', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+
+      if (!response.ok) {
+        // Get the actual error message from the API
+        const errorData = await response.text();
+        console.log('Error response:', errorData);
+        throw new Error(`HTTP ${response.status}: ${errorData}`);
+      }
+
+      const data = await response.json();
+      console.log('Fetched data:', data);
+
+      // Map the data to include default currency and color if not provided
+      const mappedWallets: WalletItem[] = data.map((wallet: any, index: number) => ({
+        ...wallet,
+        currency: 'Rp.', // Default currency
+        color: getDefaultColor(wallet.type, index), // Default color based on type
+        isDefault: index === 0, // First wallet is default for demo
+      }));
+
+      setWallets(mappedWallets);
+    } catch (error) {
+      console.error('Error fetching wallets:', error);
+      Alert.alert('Error', `Failed to load wallets: ${error}`);
+      // Fallback to empty array
+      setWallets([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Helper function to get default colors based on wallet type
+  const getDefaultColor = (type: string, index: number): string => {
+    const colorMap: { [key: string]: string } = {
+      Cash: '#2C5F6F',
+      Saving: '#4CAF50',
+      Investment: '#9C27B0',
+      Credit: '#FF5722',
+    };
+
+    const defaultColors = ['#2C5F6F', '#4CAF50', '#FF9800', '#9C27B0', '#FF5722'];
+    return colorMap[type] || defaultColors[index % defaultColors.length];
+  };
+
+  // Fetch wallets when component mounts
+  useEffect(() => {
+    fetchWallets();
+  }, []);
+
+  // Refresh wallets when screen comes into focus (e.g., after creating a new wallet)
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchWallets();
+    }, [])
+  );
 
   //   Currency formatting utility
   // Converts raw number to Indonesian Rupiah format
@@ -95,7 +139,7 @@ export default function WalletsScreen() {
   // 2. Right section: Currency + formatted balance + menu button
   // Returns a TouchableOpacity for future tap interactions (edit, view details, etc.)
   const renderWalletItem = (wallet: WalletItem) => (
-    <TouchableOpacity key={wallet.id} style={styles.walletItem}>
+    <TouchableOpacity key={wallet._id} style={styles.walletItem}>
       {/* Left Section: Icon and Wallet Information */}
       <View style={styles.walletLeft}>
         {/* Wallet details container */}
@@ -118,7 +162,7 @@ export default function WalletsScreen() {
       {/* Right Section: Balance and Menu */}
       <View style={styles.walletRight}>
         <Text style={styles.balance}>
-          {wallet.currency} {displayBalance(wallet.balance)}
+          {wallet.currency || 'Rp.'} {displayBalance(wallet.balance)}
         </Text>
       </View>
     </TouchableOpacity>
@@ -153,7 +197,21 @@ export default function WalletsScreen() {
         {/*   List rendering with map function */}
         {/* Maps through wallets array and renders each item */}
         {/* Uses ScrollView for vertical scrolling when list is long */}
-        <ScrollView style={styles.walletsList}>{wallets.map(renderWalletItem)}</ScrollView>
+        <ScrollView style={styles.walletsList}>
+          {isLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#2C5F6F" />
+              <Text style={styles.loadingText}>Loading wallets...</Text>
+            </View>
+          ) : wallets.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No wallets found</Text>
+              <Text style={styles.emptySubtext}>Create your first wallet to get started</Text>
+            </View>
+          ) : (
+            wallets.map(renderWalletItem)
+          )}
+        </ScrollView>
       </View>
 
       {/* SECTION: Navigation controls */}
@@ -328,5 +386,35 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+  },
+
+  // LOADING AND EMPTY STATES
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#666',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
   },
 });
