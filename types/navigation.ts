@@ -12,6 +12,7 @@ export type RootStackParamList = {
   DebtCollection: undefined;
   Report: undefined;
   Create: undefined;
+  Update: { _id: string };
   Chat: undefined;
   Profile: undefined;
   Home: undefined;

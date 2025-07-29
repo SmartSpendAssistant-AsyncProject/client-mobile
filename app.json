@@ -10,7 +10,14 @@
     "experiments": {
       "tsconfigPaths": true
     },
-    "plugins": [],
+    "plugins": [
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone for voice messages."
+        }
+      ]
+    ],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -19,19 +26,20 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.lycanix.SmartSpendAssistant"
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "This app needs access to microphone to record voice messages for financial transactions and questions."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.lycanix.SmartSpendAssistant"
+      "package": "com.lycanix.SmartSpendAssistant",
+      "permissions": ["android.permission.RECORD_AUDIO"]
     },
     "owner": "lycanix",
     "extra": {

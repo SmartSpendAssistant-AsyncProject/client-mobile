@@ -8,12 +8,17 @@ import {
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { RootStackNavigationProp } from '../types/navigation';
+import { useAuth } from '../utils/AuthContext';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
+import * as SecureStore from 'expo-secure-store';
+
+const BASE_URL = 'https://ssa-server-omega.vercel.app';
 
 function handleRegistrationError(errorMessage: string) {
   alert(errorMessage);
@@ -64,6 +69,8 @@ async function registerForPushNotificationsAsync() {
 
 export default function LoginScreen() {
   const [expoPushToken, setExpoPushToken] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const { login } = useAuth();
 
   //   Navigation and State Management
   //     Initialize navigation hook for screen transitions
@@ -84,10 +91,51 @@ export default function LoginScreen() {
   //   Form Submission Handler
   //    Handle login form submission and navigate to main tabs
 
-  const handleSubmit = () => {
-    // TODO: Add authentication logic here
-    console.log('Login attempt with:', { email, password, token: expoPushToken });
-    navigation.navigate('MainTabs');
+  const handleSubmit = async () => {
+    if (!email || !password) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Login request to server
+      const response = await fetch(`${BASE_URL}/api/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          token: expoPushToken, // Send expo push token with login
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Use AuthContext login method
+        await login(data.access_token);
+        
+        console.log('Login successful:', {
+          email,
+          token: expoPushToken,
+          access_token: data.access_token,
+        });
+
+        // Navigate to main tabs on successful login
+        navigation.navigate('MainTabs');
+      } else {
+        Alert.alert('Login Failed', data.message || 'Invalid credentials');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      Alert.alert('Error', 'Network error. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
 
@@ -144,7 +192,7 @@ export default function LoginScreen() {
 
                 <TextInput
                   style={styles.input}
-                  placeholder="Passwords"
+                  placeholder="Password"
                   placeholderTextColor="#9CA3AF"
                   value={password}
                   onChangeText={setPassword}
@@ -157,8 +205,13 @@ export default function LoginScreen() {
 
               {/*    Submit button with press handler */}
 
-              <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-                <Text style={styles.submitButtonText}>Submit</Text>
+              <TouchableOpacity 
+                style={[styles.submitButton, isLoading && styles.submitButtonDisabled]} 
+                onPress={handleSubmit}
+                disabled={isLoading}>
+                <Text style={styles.submitButtonText}>
+                  {isLoading ? 'Logging in...' : 'Submit'}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -284,6 +337,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 3,
+  },
+
+  // Submit button disabled styling
+  submitButtonDisabled: {
+    backgroundColor: '#9CA3AF', // Gray color when disabled
+    opacity: 0.7,
   },
 
   // Submit button text styling

@@ -10,7 +10,7 @@ import {
   Alert,
   Platform,
 } from 'react-native';
-import { useIsFocused, useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
 import { RootStackNavigationProp } from '../types/navigation';
 import { Calendar, ChevronDown } from 'lucide-react-native';
 import * as SecureStore from 'expo-secure-store';
@@ -28,12 +28,16 @@ export interface IFormTransaction {
 
 const BASE_URL = process.env.BASE_URL || 'https://ssa-server-omega.vercel.app';
 
-export default function CreateScreen() {
+export default function UpdateScreen() {
   const navigation = useNavigation<RootStackNavigationProp>();
+  const route = useRoute();
+  const { _id } = route.params as { _id: string };
+  console.log('🚀 ~ UpdateScreen ~ _id:', _id);
+
   const [token, setToken] = useState<string>('');
   const [name, setName] = useState<string>('');
   const [description, setDescription] = useState<string>('');
-  const [ammount, setAmmount] = useState<number>(0);
+  const [ammount, setAmmount] = useState<string>('');
 
   // Initialize with current local date
   const getCurrentLocalDate = () => {
@@ -48,9 +52,9 @@ export default function CreateScreen() {
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [categoryId, setCategoryId] = useState<string>('');
+  const [categoryLabel, setCategoryLabel] = useState<string>('');
   const [walletId, setWalletId] = useState<string>('');
-  const [category, setCategory] = useState<string>('');
-  const [wallet, setWallet] = useState<string>('');
+  const [walletLabel, setWalletLabel] = useState<string>('');
   const [wallets, setWallets] = useState<{ label: string; value: string }[]>([]);
   const [categories, setCategories] = useState<{ label: string; value: string }[]>([]);
 
@@ -75,6 +79,7 @@ export default function CreateScreen() {
         setWallets(walletOptions);
       }
     };
+
     const fetchCategories = async (token: string) => {
       const response = await fetch(`${BASE_URL}/api/categories`, {
         headers: {
@@ -90,29 +95,68 @@ export default function CreateScreen() {
         setCategories(categoryOptions);
       }
     };
+
+    const fetchTransaction = async (token: string, transactionId: string) => {
+      try {
+        const response = await fetch(`${BASE_URL}/api/transactions/${transactionId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (response.ok) {
+          const transaction = await response.json();
+          console.log('🚀 ~ fetchTransaction ~ transaction:', transaction);
+          setName(transaction.name);
+          setDescription(transaction.description);
+          setAmmount(transaction.ammount.toString());
+          setDate(transaction.date);
+          setCategoryId(transaction.category_id);
+          setWalletId(transaction.wallet_id);
+
+          // Set the selected date for date picker
+          const [year, month, day] = transaction.date.split('-');
+          setSelectedDate(new Date(parseInt(year), parseInt(month) - 1, parseInt(day)));
+          onDateChange(null, new Date(parseInt(year), parseInt(month) - 1, parseInt(day)));
+        }
+      } catch (error) {
+        console.error('Error fetching transaction:', error);
+        Alert.alert('Error', 'Failed to fetch transaction data');
+      }
+    };
+
     const fetchInitialData = async () => {
       const token = await SecureStore.getItemAsync('access_token');
       if (token) {
         setToken(token);
         fetchWallets(token);
         fetchCategories(token);
+        fetchTransaction(token, _id);
       }
     };
+
     if (isFocused) {
       fetchInitialData();
-      setName('');
-      setDescription('');
-      setAmmount(0);
-      setDate(getCurrentLocalDate());
-      setCategoryId('');
-      setWalletId('');
-      setCategory('');
-      setWallet('');
-      setCategory('');
-      setShowCategoryDropdown(false);
-      setShowWalletDropdown(false);
     }
-  }, [isFocused]);
+  }, [isFocused, _id]);
+
+  // Update category and wallet labels when data is loaded
+  useEffect(() => {
+    if (categories.length > 0 && categoryId) {
+      const selectedCategory = categories.find((cat) => cat.value === categoryId);
+      if (selectedCategory) {
+        setCategoryLabel(selectedCategory.label);
+      }
+    }
+  }, [categories, categoryId]);
+
+  useEffect(() => {
+    if (wallets.length > 0 && walletId) {
+      const selectedWallet = wallets.find((wallet) => wallet.value === walletId);
+      if (selectedWallet) {
+        setWalletLabel(selectedWallet.label);
+      }
+    }
+  }, [wallets, walletId]);
 
   //   Date picker handler
   const onDateChange = (event: any, selectedDate?: Date) => {
@@ -144,21 +188,21 @@ export default function CreateScreen() {
   //   Category selection handler
   const handleCategorySelect = (category: { label: string; value: string }) => {
     setCategoryId(category.value);
-    setCategory(category.label);
+    setCategoryLabel(category.label);
     setShowCategoryDropdown(false);
   };
 
   //   Wallet selection handler
   const handleWalletSelect = (wallet: { label: string; value: string }) => {
     setWalletId(wallet.value);
-    setWallet(wallet.label);
+    setWalletLabel(wallet.label);
     setShowWalletDropdown(false);
   };
 
-  //   Add transaction handler with validation and navigation
-  const handleAddTransaction = async () => {
-    const response = await fetch(`${BASE_URL}/api/transactions`, {
-      method: 'POST',
+  //   Update transaction handler with validation and navigation
+  const handleUpdateTransaction = async () => {
+    const response = await fetch(`${BASE_URL}/api/transactions/${_id}`, {
+      method: 'PUT',
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
@@ -172,12 +216,15 @@ export default function CreateScreen() {
         wallet_id: walletId,
       }),
     });
+
+    console.log('Response status:', response.status);
+
     if (!response.ok) {
       const error = await response.json();
       Alert.alert('Error', error.message || 'Failed to add transaction');
       return;
     } else {
-      navigation.navigate('Home');
+      navigation.goBack();
     }
   };
 
@@ -207,7 +254,7 @@ export default function CreateScreen() {
     <SafeAreaView style={styles.container}>
       {/*   Header section with title */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Add Transaction</Text>
+        <Text style={styles.headerTitle}>Update Transaction</Text>
       </View>
 
       {/*   Main form content with scroll */}
@@ -232,7 +279,7 @@ export default function CreateScreen() {
               <TextInput
                 style={styles.amountInput}
                 value={ammount.toString()}
-                onChangeText={(value) => setAmmount(Number(value))}
+                onChangeText={(value) => setAmmount(value)}
                 placeholder="0"
                 placeholderTextColor="#9CA3AF"
                 keyboardType="numeric"
@@ -287,9 +334,9 @@ export default function CreateScreen() {
               <Text
                 style={[
                   styles.selectText,
-                  category ? styles.selectedText : styles.placeholderText,
+                  categoryLabel ? styles.selectedText : styles.placeholderText,
                 ]}>
-                {category || 'Select category'}
+                {categoryLabel || 'Select category'}
               </Text>
               <ChevronDown
                 size={20}
@@ -311,8 +358,11 @@ export default function CreateScreen() {
                 setShowCategoryDropdown(false); // Close other dropdown
               }}>
               <Text
-                style={[styles.selectText, wallet ? styles.selectedText : styles.placeholderText]}>
-                {wallet || 'Select wallet'}
+                style={[
+                  styles.selectText,
+                  walletLabel ? styles.selectedText : styles.placeholderText,
+                ]}>
+                {walletLabel || 'Select wallet'}
               </Text>
               <ChevronDown
                 size={20}
@@ -324,10 +374,10 @@ export default function CreateScreen() {
             {renderDropdown(showWalletDropdown, wallets, handleWalletSelect)}
           </View>
 
-          {/*   Add transaction submit button */}
+          {/*   Update transaction submit button */}
           <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.addButton} onPress={handleAddTransaction}>
-              <Text style={styles.addButtonText}>Add Transaction</Text>
+            <TouchableOpacity style={styles.addButton} onPress={handleUpdateTransaction}>
+              <Text style={styles.addButtonText}>Update Transaction</Text>
             </TouchableOpacity>
           </View>
         </View>
