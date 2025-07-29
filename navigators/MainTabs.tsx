@@ -1,6 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, TouchableOpacity, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Home, ChartNoAxesCombined, Plus, Bot, User } from 'lucide-react-native';
 import HomeScreen from '../screens/HomeScreen';
 import ReportScreen from '../screens/ReportScreen';
@@ -63,59 +64,61 @@ const CustomTabBarButton = ({ children, onPress, routeName, isFocused }: any) =>
 //   Custom tab bar component that renders all navigation items
 const CustomTabBar = ({ state, descriptors, navigation }: any) => {
   return (
-    <View
-      style={{
-        //   Style container to match design specifications
-        backgroundColor: '#FFFFFF', // White background
-        borderTopWidth: 1, // Top border for separation
-        borderTopColor: '#E5E7EB', // Gray-200 equivalent
-        paddingHorizontal: 32, // 8 * 4 = 32px horizontal padding
-        paddingVertical: 16, // 4 * 4 = 16px vertical padding
-        flexDirection: 'row', // Arrange buttons horizontally
-        justifyContent: 'space-between', // Even spacing between buttons
-        alignItems: 'center', // Center buttons vertically
-      }}>
-      {/*   Map through navigation items to render each tab button */}
-      {navigationItems.map((item, index) => {
-        const route = state.routes[index];
-        const isFocused = state.index === index;
-        const Icon = item.icon;
+    <SafeAreaView edges={['bottom']} style={{ backgroundColor: '#FFFFFF' }}>
+      <View
+        style={{
+          //   Style container to match design specifications
+          backgroundColor: '#FFFFFF', // White background
+          borderTopWidth: 1, // Top border for separation
+          borderTopColor: '#E5E7EB', // Gray-200 equivalent
+          paddingHorizontal: 32, // 8 * 4 = 32px horizontal padding
+          paddingVertical: 16, // 4 * 4 = 16px vertical padding
+          flexDirection: 'row', // Arrange buttons horizontally
+          justifyContent: 'space-between', // Even spacing between buttons
+          alignItems: 'center', // Center buttons vertically
+        }}>
+        {/*   Map through navigation items to render each tab button */}
+        {navigationItems.map((item, index) => {
+          const route = state.routes[index];
+          const isFocused = state.index === index;
+          const Icon = item.icon;
 
-        //   Handle tab press with navigation logic
-        const onPress = () => {
-          const event = navigation.emit({
-            type: 'tabPress',
-            target: route.key,
-            canPreventDefault: true,
-          });
+          //   Handle tab press with navigation logic
+          const onPress = () => {
+            const event = navigation.emit({
+              type: 'tabPress',
+              target: route.key,
+              canPreventDefault: true,
+            });
 
-          if (!isFocused && !event.defaultPrevented) {
-            navigation.navigate(route.name);
-          }
-        };
+            if (!isFocused && !event.defaultPrevented) {
+              navigation.navigate(route.name);
+            }
+          };
 
-        //   Determine icon color and stroke width based on active state
-        const isCreateButton = item.id === 'Create';
-        const isActive = isFocused;
-        //   Special color logic - Create button uses custom blue when active, others use slate
-        const iconColor = isActive ? (isCreateButton ? '#FFFFFF' : '#FFFFFF') : '#6B7280';
-        const strokeWidth = isActive ? 2 : 1.5; // Thicker stroke for active state
+          //   Determine icon color and stroke width based on active state
+          const isCreateButton = item.id === 'Create';
+          const isActive = isFocused;
+          //   Special color logic - Create button uses custom blue when active, others use slate
+          const iconColor = isActive ? (isCreateButton ? '#FFFFFF' : '#FFFFFF') : '#6B7280';
+          const strokeWidth = isActive ? 2 : 1.5; // Thicker stroke for active state
 
-        return (
-          <CustomTabBarButton
-            key={item.id}
-            onPress={onPress}
-            routeName={route.name}
-            isFocused={isFocused}>
-            <Icon
-              size={24} // 6 * 4 = 24px icon size (equivalent to w-6 h-6)
-              color={iconColor}
-              strokeWidth={strokeWidth}
-            />
-          </CustomTabBarButton>
-        );
-      })}
-    </View>
+          return (
+            <CustomTabBarButton
+              key={item.id}
+              onPress={onPress}
+              routeName={route.name}
+              isFocused={isFocused}>
+              <Icon
+                size={24} // 6 * 4 = 24px icon size (equivalent to w-6 h-6)
+                color={iconColor}
+                strokeWidth={strokeWidth}
+              />
+            </CustomTabBarButton>
+          );
+        })}
+      </View>
+    </SafeAreaView>
   );
 };
 
