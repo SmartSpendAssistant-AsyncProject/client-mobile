@@ -390,11 +390,6 @@ export default function UpdateScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/*   Header section with title */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Update Transaction</Text>
-      </View>
-
       {/*   Main form content with scroll */}
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.formContainer}>
