@@ -10,11 +10,12 @@ import {
   Alert,
 } from 'react-native';
 import { ArrowLeft, Send, Mic, ChevronDown, Bot, Wallet } from 'lucide-react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { RootStackNavigationProp } from '../types/navigation';
 import { VoiceRecorderModal } from '../components/VoiceRecorderModal';
 import { VoiceApiService } from '../utils/VoiceApiService';
 import { getAuthToken, getUserWallets } from '../utils/AuthUtils';
+import * as SecureStore from 'expo-secure-store';
 
 //   Define message interface for type safety
 interface Message {
@@ -59,6 +60,17 @@ export default function ChatScreen() {
   const [selectedWallet, setSelectedWallet] = useState<WalletItem | null>(null);
   const [isWalletDropdownVisible, setIsWalletDropdownVisible] = useState(false);
   const [isLoadingWallets, setIsLoadingWallets] = useState(false);
+
+  // User data state
+  const [userProfile, setUserProfile] = useState({
+    _id: '',
+    name: '',
+    username: '',
+    email: '',
+    createdAt: '',
+    updatedAt: '',
+    status: '',
+  });
 
   //   Dropdown options configuration
   const dropdownOptions: DropdownOption[] = [
@@ -294,6 +306,24 @@ export default function ChatScreen() {
     setIsDropdownVisible(false);
   };
 
+  // Handle get user profile
+  const fetchUserProfile = async () => {
+    const access_token = await SecureStore.getItemAsync('access_token');
+    try {
+      const response = await fetch('https://ssa-server-omega.vercel.app/api/profile', {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+        },
+      });
+      const data = await response.json();
+      setUserProfile(data);
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      Alert.alert('Error', 'Failed to load profile data');
+    }
+  };
+
   //   Render individual message component
   const renderMessage = (message: Message) => {
     if (message.isUser) {
@@ -383,6 +413,62 @@ export default function ChatScreen() {
       );
     }
   };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchUserProfile();
+      return () => {
+        console.log('Chat focus effect cleanup');
+      };
+    }, [])
+  );
+
+  if (userProfile.status === 'free') {
+    return (
+      <SafeAreaView
+        style={{
+          flex: 1,
+          backgroundColor: '#FFFFFF',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}>
+        <Text
+          style={{
+            fontSize: 24,
+            fontWeight: 'bold',
+            textAlign: 'center',
+            width: 300,
+          }}>
+          This is feature is unlocked once you are a premium user
+        </Text>
+
+        <View
+          style={{
+            paddingTop: 16,
+          }}>
+          <TouchableOpacity
+            style={{
+              backgroundColor: '#3b667c', // Slate-600
+              borderRadius: 12,
+              paddingVertical: 12,
+              paddingHorizontal: 20,
+              alignItems: 'center',
+              height: 48,
+            }}
+            onPress={() => navigation.navigate('Profile')}>
+            <Text
+              style={{
+                color: '#FFFFFF',
+                fontSize: 16,
+                fontWeight: '500',
+              }}>
+              Go premium
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
