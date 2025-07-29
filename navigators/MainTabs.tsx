@@ -13,17 +13,15 @@ const Tab = createBottomTabNavigator();
 
 //   Define navigation items configuration for consistent icon mapping
 const navigationItems = [
-  { id: 'Home', icon: Home, label: 'Home', component: HomeScreen },
-  { id: 'Report', icon: ChartNoAxesCombined, label: 'Analytics', component: ReportScreen },
-  { id: 'Create', icon: Plus, label: 'Add', component: CreateScreen },
-  { id: 'Chat', icon: Bot, label: 'Messages', component: ChatScreen },
-  { id: 'Profile', icon: User, label: 'Profile', component: ProfileScreen },
+  { id: 'Home', icon: Home, label: '', component: HomeScreen },
+  { id: 'Report', icon: ChartNoAxesCombined, label: '', component: ReportScreen },
+  { id: 'Create', icon: Plus, label: '', component: CreateScreen },
+  { id: 'Chat', icon: Bot, label: '', component: ChatScreen },
+  { id: 'Profile', icon: User, label: '', component: ProfileScreen },
 ];
 
 //   Custom tab bar button component with dynamic styling based on active state
 const CustomTabBarButton = ({ children, onPress, routeName, isFocused }: any) => {
-  //   Determine if current button is the special "Create" button
-  const isCreateButton = routeName === 'Create';
   //   Only Create button gets special color when focused, all others follow normal pattern
   const isActive = isFocused;
 
@@ -80,7 +78,6 @@ const CustomTabBar = ({ state, descriptors, navigation }: any) => {
       {/*   Map through navigation items to render each tab button */}
       {navigationItems.map((item, index) => {
         const route = state.routes[index];
-        const { options } = descriptors[route.key];
         const isFocused = state.index === index;
         const Icon = item.icon;
 
@@ -122,40 +119,24 @@ const CustomTabBar = ({ state, descriptors, navigation }: any) => {
   );
 };
 
-//   Main tab navigator component with custom tab bar and headers
+//   Main tab navigator component with custom tab bar and no headers
 export default function MainTabs() {
   return (
     <Tab.Navigator
       tabBar={(props) => <CustomTabBar {...props} />}
       screenOptions={{
-        //   Configure header styling for all screens
-        headerShown: true,
-        headerStyle: {
-          backgroundColor: '#FFFFFF', // White header background
-          elevation: 0, // Remove shadow on Android
-          shadowOpacity: 0, // Remove shadow on iOS
-          borderBottomWidth: 1, // Add bottom border
-          borderBottomColor: '#E5E7EB', // Gray-200 equivalent
-        },
-        headerTitleStyle: {
-          fontSize: 18, // Appropriate title size
-          fontWeight: '600', // Semi-bold font weight
-          color: '#1F2937', // Gray-800 for good contrast
-        },
-        headerTitleAlign: 'left', // Align title to left for modern look
-        headerLeftContainerStyle: {
-          paddingLeft: 16, // Add left padding for title
-        },
+        //   Hide headers for all tab screens
+        headerShown: false,
       }}>
-      {/*   Dynamically create tab screens with individual header configurations */}
+      {/*   Dynamically create tab screens without headers */}
       {navigationItems.map((item) => (
         <Tab.Screen
           key={item.id}
           name={item.id}
           component={item.component}
           options={{
-            //   Set appropriate header title for each screen
-            headerTitle: item.label,
+            //   Keep headers hidden for all tab screens
+            headerShown: false,
           }}
         />
       ))}

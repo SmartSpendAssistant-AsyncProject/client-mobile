@@ -3,6 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { RootStackNavigationProp } from '../types/navigation';
 import { VictoryPie, VictoryLabel } from 'victory-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   View,
   Text,
@@ -452,7 +453,7 @@ export default function ReportScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Reports</Text>
       </View>
@@ -490,7 +491,7 @@ export default function ReportScreen() {
         {/* Tab Content */}
         {!loading && !error && renderTabContent()}
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
