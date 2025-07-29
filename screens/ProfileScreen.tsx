@@ -167,7 +167,9 @@ export default function ProfileScreen() {
 
             <View style={styles.profileInfo}>
               <View style={styles.nameRow}>
-                <Text style={styles.name}>{userProfile.name || 'Loading...'}</Text>
+                <Text style={styles.name}>
+                  {userProfile.name || 'Loading...'} {userProfile.status === 'premium' && '👑'}
+                </Text>
                 {/* <TouchableOpacity onPress={handleEditProfile}>
                   <Text style={styles.editIcon}>✏️</Text>
                 </TouchableOpacity> */}
