@@ -1,65 +1,55 @@
-import React from 'react';
-
-import { View, Text, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { RootStackNavigationProp } from 'types/navigation';
-
+import { DebtLoanItem } from 'types/DebtLoan';
+import DebtLoanService from 'utils/DebtLoanService';
 import CardDebtCredit from 'components/CardDebtCredit';
 
 export default function LoanScreen() {
-  //! Sample data untuk loan guys
-  /*
-  name: string;
-  description: string;
-  amount: number;
-  date: string;
-  remaining_amount: number;
-  */
-
-  const loanData = [
-    {
-      title: 'KPR - BTN',
-      description: 'House mortgage loan',
-      amount: 30000000,
-      total: 50000000,
-
-    },
-    {
-      title: 'Car Loan - BRI',
-      description: 'Vehicle financing',
-      amount: 12000000,
-      total: 15000000,
-
-    },
-    {
-      title: 'Car Loan - BRI',
-      description: 'Vehicle financing',
-      amount: 12000000,
-      total: 15000000,
-    },
-    {
-      title: 'Car Loan - BRI',
-      description: 'Vehicle financing',
-      amount: 12000000,
-      total: 15000000,
-    },
-    {
-      title: 'Car Loan - BRI',
-      description: 'Vehicle financing',
-      amount: 12000000,
-      total: 15000000,
-    },
-    {
-      title: 'Car Loan - BRI',
-      description: 'Vehicle financing',
-      amount: 12000000,
-      total: 15000000,
-
-    },
-  ];
-
+  const [loanData, setLoanData] = useState<DebtLoanItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const navigation = useNavigation<RootStackNavigationProp>();
+
+  useEffect(() => {
+    fetchLoans();
+  }, []);
+
+  const fetchLoans = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const data = await DebtLoanService.getLoans();
+      setLoanData(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch loans');
+      console.error('Error fetching loans:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#3b667c" />
+        <Text style={{ marginTop: 16, fontSize: 16, color: 'gray' }}>Loading loans...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Text style={{ fontSize: 16, color: 'red', textAlign: 'center', paddingHorizontal: 20 }}>
+          Error: {error}
+        </Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
@@ -75,17 +65,26 @@ export default function LoanScreen() {
         </Text>
 
         <ScrollView showsVerticalScrollIndicator={false}>
-          {loanData.map((loan, index) => (
-            <CardDebtCredit
-              key={index}
-              {...loan}
-              onPress={() => navigation.navigate('DebtCollection')}
-              buttonLabel="Collect now"
-            />
-          ))}
+          {loanData.length === 0 ? (
+            <View style={{ alignItems: 'center', paddingTop: 50 }}>
+              <Text style={{ fontSize: 16, color: 'gray' }}>No loans found</Text>
+            </View>
+          ) : (
+            loanData.map((loan) => (
+              <CardDebtCredit
+                key={loan._id}
+                name={loan.name}
+                description={loan.description}
+                ammount={loan.ammount}
+                date={loan.date}
+                remaining_ammount={loan.remaining_ammount}
+                onPress={() => navigation.navigate('DebtCollection', { loanItem: loan })}
+                buttonLabel="Collect now"
+              />
+            ))
+          )}
         </ScrollView>
       </View>
     </SafeAreaView>
-
   );
 }
