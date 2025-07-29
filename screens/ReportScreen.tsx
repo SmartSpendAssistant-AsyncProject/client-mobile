@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import * as SecureStore from 'expo-secure-store';
+import { useNavigation } from '@react-navigation/native';
+import { RootStackNavigationProp } from '../types/navigation';
 import {
   View,
   Text,
@@ -122,6 +124,7 @@ const transformTransactionToReportItem = (transaction: Transaction): ReportItem 
 };
 
 export default function ReportScreen() {
+  const navigation = useNavigation<RootStackNavigationProp>();
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
   const [transactions, setTransactions] = useState<ReportItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -129,62 +132,74 @@ export default function ReportScreen() {
 
   const BASE_URL = process.env.BASE_URL || 'https://ssa-server-omega.vercel.app';
 
-  const fetchTransactions = async (month: string) => {
-    const access_token = await SecureStore.getItemAsync('access_token');
-    setLoading(true);
-    setError(null);
+  const fetchTransactions = useCallback(
+    async (month: string) => {
+      const access_token = await SecureStore.getItemAsync('access_token');
+      setLoading(true);
+      setError(null);
 
-    try {
-      const monthNumber = getMonthNumber(month);
-      const response = await fetch(`${BASE_URL}/api/transactions?month=2025-${monthNumber}`, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${access_token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      try {
+        const monthNumber = getMonthNumber(month);
+        const response = await fetch(`${BASE_URL}/api/transactions?month=2025-${monthNumber}`, {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${access_token}`,
+            'Content-Type': 'application/json',
+          },
+        });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data: ApiResponse = await response.json();
+
+        // Transform API data to display format
+        const transformedTransactions = data.data.map(transformTransactionToReportItem);
+
+        setTransactions(transformedTransactions);
+      } catch (err) {
+        console.error('Error fetching transactions:', err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch transactions');
+        setTransactions([]);
+      } finally {
+        setLoading(false);
       }
-
-      const data: ApiResponse = await response.json();
-
-      // Transform API data to display format
-      const transformedTransactions = data.data.map(transformTransactionToReportItem);
-
-      setTransactions(transformedTransactions);
-    } catch (err) {
-      console.error('Error fetching transactions:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch transactions');
-      setTransactions([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [BASE_URL]
+  );
 
   useEffect(() => {
     fetchTransactions(selectedMonth);
-  }, [selectedMonth]);
+  }, [selectedMonth, fetchTransactions]);
 
   const handleMonthChange = (month: string) => {
     setSelectedMonth(month);
   };
 
+  const handleTransactionPress = (transactionId: string) => {
+    navigation.navigate('Update', { _id: transactionId });
+  };
+
   const renderTransactionItem = ({ item }: { item: ReportItem }) => (
-    <View style={styles.listItem}>
-      <View style={styles.transactionRow}>
-        <View style={styles.transactionInfo}>
-          <Text style={styles.title}>{item.category}</Text>
-          <Text style={styles.category}>{item.title}</Text>
-          <Text style={styles.date}>{item.date}</Text>
+    <TouchableOpacity
+      onPress={() => handleTransactionPress(item.id)}
+      activeOpacity={0.7}
+      style={styles.touchableItem}>
+      <View style={styles.listItem}>
+        <View style={styles.transactionRow}>
+          <View style={styles.transactionInfo}>
+            <Text style={styles.title}>{item.category}</Text>
+            <Text style={styles.category}>{item.title}</Text>
+            <Text style={styles.date}>{item.date}</Text>
+          </View>
+          <Text style={[styles.amount, item.type === 'income' ? styles.income : styles.expense]}>
+            {item.type === 'income' ? 'Rp. ' : 'Rp. -'}
+            {item.amount.toLocaleString('id-ID')}
+          </Text>
         </View>
-        <Text style={[styles.amount, item.type === 'income' ? styles.income : styles.expense]}>
-          {item.type === 'income' ? 'Rp. ' : 'Rp. -'}
-          {item.amount.toLocaleString('id-ID')}
-        </Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   const renderMonthItem = ({ item }: { item: string }) => (
@@ -345,6 +360,9 @@ const styles = StyleSheet.create({
   },
   transactionsList: {
     paddingBottom: 16,
+  },
+  touchableItem: {
+    borderRadius: 8,
   },
   transactionRow: {
     flexDirection: 'row',
