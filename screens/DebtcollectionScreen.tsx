@@ -1,40 +1,93 @@
-import React, { useState } from 'react';
-import { View, Button, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Button, KeyboardAvoidingView, Platform, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
+import { RootStackParamList, RootStackNavigationProp } from 'types/navigation';
+import { DebtLoanItem } from 'types/DebtLoan';
+import DebtLoanService, { Wallet } from 'utils/DebtLoanService';
 import CardRepayCollect from '../components/CardRepayCollect';
 
-const dummyWallets = [
-  { id: 'w1', name: 'Amar', balance: 50000 },
-  { id: 'w2', name: 'Budi', balance: 1000 },
-  { id: 'w3', name: 'Budu', balance: 20000 },
-  { id: 'w4', name: 'Damar 1', balance: 10000 },
-  { id: 'w5', name: 'Damar 2', balance: 20000 },
-  { id: 'w6', name: 'Damar 3', balance: 30000 },
-  { id: 'w7', name: 'Damar 4', balance: 40000 },
-  { id: 'w8', name: 'Damar 5', balance: 50000 },
-  { id: 'w9', name: 'Damar 6', balance: 60000 },
-  { id: 'w10', name: 'Damar 7', balance: 70000 },
-  { id: 'w11', name: 'Damar 8', balance: 800000 },
-  { id: 'w12', name: 'Damar 9', balance: 900000 },
-  { id: 'w13', name: 'Damar 10', balance: 1000000 },
-];
+type DebtCollectionScreenRouteProp = RouteProp<RootStackParamList, 'DebtCollection'>;
 
-export default function DebtCollectionScreen({ navigation }: any) {
+export default function DebtCollectionScreen() {
+  const [wallets, setWallets] = useState<Wallet[]>([]);
   const [amount, setAmount] = useState(0);
   const [selectedWalletId, setSelectedWalletId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingWallets, setIsLoadingWallets] = useState(true);
   const insets = useSafeAreaInsets();
+  const route = useRoute<DebtCollectionScreenRouteProp>();
+  const navigation = useNavigation<RootStackNavigationProp>();
+  const { loanItem } = route.params;
 
-  const handleCollect = () => {
+  useEffect(() => {
+    fetchWallets();
+  }, []);
+
+  const fetchWallets = async () => {
+    try {
+      setIsLoadingWallets(true);
+      const data = await DebtLoanService.getWallets();
+      setWallets(data);
+    } catch (error) {
+      console.error('Error fetching wallets:', error);
+      Alert.alert('Error', 'Failed to fetch wallets');
+    } finally {
+      setIsLoadingWallets(false);
+    }
+  };
+
+  const handleCollect = async () => {
     if (!selectedWalletId || amount <= 0) {
-      alert('Please fill out collection info');
+      Alert.alert('Error', 'Please fill out collection info');
       return;
     }
 
-    alert(`Collection of Rp ${amount.toLocaleString('id-ID')} stored to ${selectedWalletId}`);
-    navigation.navigate('Loan'); // nanti bisa diarahkan ke 'Loan' atau halaman success
+    if (amount > loanItem.remaining_ammount) {
+      Alert.alert('Error', `Amount cannot exceed remaining loan amount (Rp. ${loanItem.remaining_ammount.toLocaleString('id-ID')})`);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      
+      const collectionData = {
+        description: `Collection for ${loanItem.name}`,
+        ammount: amount,
+        wallet_id: selectedWalletId,
+        parent_id: loanItem._id,
+      };
+
+      await DebtLoanService.createCollection(collectionData);
+      
+      Alert.alert('Success', `Collection of Rp ${amount.toLocaleString('id-ID')} has been processed successfully!`, [
+        { text: 'OK', onPress: () => navigation.navigate('Loan') }
+      ]);
+    } catch (error) {
+      console.error('Error creating collection:', error);
+      Alert.alert('Error', 'Failed to process collection. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  //TODO: sementara SafeAreaProvider di page ini saja, mungkin nanti di App.tsx
+  if (isLoadingWallets) {
+    return (
+      <SafeAreaProvider>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color="#3b667c" />
+        </View>
+      </SafeAreaProvider>
+    );
+  }
+
+  // Convert wallet data to format expected by CardRepayCollect
+  const walletOptions = wallets.map(wallet => ({
+    id: wallet._id,
+    name: wallet.name,
+    balance: wallet.balance,
+  }));
+
   return (
     <SafeAreaProvider>
       <KeyboardAvoidingView
@@ -43,12 +96,12 @@ export default function DebtCollectionScreen({ navigation }: any) {
         <View style={{ flex: 1, padding: 16 }}>
           <CardRepayCollect
             amount={amount}
-            wallets={dummyWallets}
+            wallets={walletOptions}
             selectedWalletId={selectedWalletId}
             onChangeAmount={setAmount}
             onSelectWallet={setSelectedWalletId}
             mode="collect"
-            targetName="User Amar"
+            targetName={loanItem.name}
           />
         </View>
 
@@ -61,7 +114,11 @@ export default function DebtCollectionScreen({ navigation }: any) {
             borderTopWidth: 1,
             borderColor: '#ddd',
           }}>
-          <Button title="Confirm Collection" onPress={handleCollect} />
+          <Button 
+            title={isLoading ? "Processing..." : "Confirm Collection"} 
+            onPress={handleCollect}
+            disabled={isLoading}
+          />
         </View>
       </KeyboardAvoidingView>
     </SafeAreaProvider>
