@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useIsFocused, useNavigation, useRoute } from '@react-navigation/native';
 import { RootStackNavigationProp } from '../types/navigation';
-import { Calendar, ChevronDown } from 'lucide-react-native';
+import { Calendar, ChevronDown, Plus } from 'lucide-react-native';
 import * as SecureStore from 'expo-secure-store';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
@@ -250,6 +250,10 @@ export default function UpdateScreen() {
     );
   };
 
+  const handleAddCategory = () => {
+    navigation.navigate('CreateCategory');
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       {/*   Header section with title */}
@@ -325,6 +329,13 @@ export default function UpdateScreen() {
           {/*   Category selector field with dropdown */}
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>Category</Text>
+            <View style={styles.labelWithButton}>
+              <Text style={styles.inputLabel}>Category</Text>
+              <TouchableOpacity style={styles.addCategoryButton} onPress={handleAddCategory}>
+                <Plus size={16} color="#3b667c" />
+                <Text style={styles.addCategoryButtonText}>Add</Text>
+              </TouchableOpacity>
+            </View>
             <TouchableOpacity
               style={styles.selectInput}
               onPress={() => {
@@ -422,6 +433,27 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     color: '#374151',
+  },
+
+  //   Label with button styles
+  labelWithButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  addCategoryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    gap: 4,
+  },
+  addCategoryButtonText: {
+    fontSize: 12,
+    color: '#3b667c',
+    fontWeight: '500',
   },
 
   //   Amount input styles

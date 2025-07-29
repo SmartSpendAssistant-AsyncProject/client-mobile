@@ -534,8 +534,8 @@ export default function HomeScreen() {
                   activeOpacity={0.7}>
                   <View style={styles.transactionContent}>
                     <View style={styles.transactionInfo}>
-                      <Text style={styles.transactionCategory}>{transaction.name}</Text>
-                      <Text style={styles.transactionDescription}>{transaction.category}</Text>
+                      <Text style={styles.transactionCategory}>{transaction.category}</Text>
+                      <Text style={styles.transactionDescription}>{transaction.name}</Text>
                     </View>
                     <View style={styles.transactionAmountContainer}>
                       <Text
