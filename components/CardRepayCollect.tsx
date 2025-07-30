@@ -43,9 +43,10 @@ export default function CardRepayCollect({
         </Text>
         <TextInput
           keyboardType="numeric"
-          value={amount.toString()}
-          onChangeText={(text) => onChangeAmount(Number(text))}
+          value={amount === 0 ? '' : amount.toString()}
+          onChangeText={(text) => onChangeAmount(text === '' ? 0 : Number(text))}
           placeholder="Rp. 0"
+          placeholderTextColor="#9CA3AF"
           style={styles.input}
         />
       </View>
@@ -77,8 +78,9 @@ export default function CardRepayCollect({
                 </Text>
                 <Text
                   style={{
-                    color: isSelected ? 'white' : '#444',
+                    color: isSelected ? 'rgba(255, 255, 255, 0.9)' : '#6B7280',
                     fontSize: 12,
+                    fontWeight: '600',
                   }}>
                   Rp. {item.balance.toLocaleString('id-ID')}
                 </Text>
@@ -97,25 +99,34 @@ export default function CardRepayCollect({
 
           <View style={styles.row}>
             <Text style={styles.label}>{mode === 'repay' ? 'To:' : 'From:'}</Text>
-            <Text>{targetName}</Text>
+            <Text style={{ fontSize: 14, fontWeight: '600', color: '#1F2937' }}>{targetName}</Text>
           </View>
 
           <View style={styles.row}>
             <Text style={styles.label}>Amount:</Text>
-            <Text>Rp. {amount.toLocaleString('id-ID')}</Text>
+            <Text style={{ fontSize: 14, fontWeight: '700', color: '#3b667c' }}>
+              Rp. {amount.toLocaleString('id-ID')}
+            </Text>
           </View>
 
           <View style={styles.row}>
             <Text style={styles.label}>{mode === 'repay' ? 'From:' : 'To:'}</Text>
-            <Text>{selectedWallet.name}</Text>
+            <Text style={{ fontSize: 14, fontWeight: '600', color: '#1F2937' }}>
+              {selectedWallet.name}
+            </Text>
           </View>
 
-          <View style={styles.row}>
-            <Text style={styles.label}>Remaining:</Text>
+          <View
+            style={[
+              styles.row,
+              { borderTopWidth: 1, borderTopColor: '#E5E7EB', paddingTop: 12, marginTop: 6 },
+            ]}>
+            <Text style={[styles.label, { fontSize: 16, color: '#1F2937' }]}>Remaining:</Text>
             <Text
               style={{
-                color: mode === 'repay' ? 'red' : 'green',
-                fontWeight: '600',
+                color: mode === 'repay' ? '#EF4444' : '#10B981',
+                fontWeight: '700',
+                fontSize: 16,
               }}>
               Rp. {remaining?.toLocaleString('id-ID')}
             </Text>
@@ -128,49 +139,70 @@ export default function CardRepayCollect({
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
+    flex: 1,
+    backgroundColor: '#F9FAFB',
+    paddingVertical: 8,
   },
   card: {
     backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
+    borderRadius: 16,
+    padding: 14,
+    marginHorizontal: 20,
+    marginBottom: 10,
+    marginTop: 6,
     shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   cardTitle: {
     fontWeight: 'bold',
-    fontSize: 16,
-    marginBottom: 12,
+    fontSize: 15,
+    marginBottom: 10,
+    color: '#1F2937',
+    textAlign: 'center',
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 10,
+    borderWidth: 2,
+    borderColor: '#3b667c',
+    borderRadius: 12,
+    padding: 12,
     fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    backgroundColor: '#F9FAFB',
+    color: '#1F2937',
   },
   walletList: {
-    height: 300,
+    maxHeight: 160,
   },
   walletItem: {
-    borderRadius: 8,
+    borderRadius: 10,
     padding: 12,
-    marginBottom: 12,
-    borderWidth: 1,
+    marginBottom: 8,
+    borderWidth: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   walletName: {
-    fontWeight: '600',
+    fontWeight: '700',
     marginBottom: 4,
+    fontSize: 14,
   },
   row: {
     flexDirection: 'row',
-    marginBottom: 6,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+    paddingVertical: 2,
   },
   label: {
-    width: 80,
     fontWeight: '600',
+    fontSize: 14,
+    color: '#374151',
   },
 });

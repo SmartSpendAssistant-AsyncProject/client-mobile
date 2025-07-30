@@ -1,7 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  ActivityIndicator,
+  TouchableOpacity,
+  StyleSheet,
+  Pressable,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RootStackNavigationProp, RootStackParamList } from 'types/navigation';
 import { DebtLoanDetailItem } from 'types/DebtLoan';
 import DebtLoanService from 'utils/DebtLoanService';
@@ -16,6 +26,7 @@ export default function LoanDetailScreen() {
   const navigation = useNavigation<RootStackNavigationProp>();
   const route = useRoute<LoanDetailScreenRouteProp>();
   const { loanId } = route.params;
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     fetchLoanDetail();
@@ -51,9 +62,7 @@ export default function LoanDetailScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>
-            Error: {error || 'Loan not found'}
-          </Text>
+          <Text style={styles.errorText}>Error: {error || 'Loan not found'}</Text>
         </View>
       </SafeAreaView>
     );
@@ -61,73 +70,92 @@ export default function LoanDetailScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView}>
-        {/* Main Loan Information */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Loan Information</Text>
-          <View style={styles.detailRow}>
-            <Text style={styles.label}>Name:</Text>
-            <Text style={styles.value}>{loanDetail.name}</Text>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView style={styles.scrollView}>
+          {/* Main Loan Information */}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Loan Information</Text>
+            <View style={styles.detailRow}>
+              <Text style={styles.label}>Name:</Text>
+              <Text style={styles.value}>{loanDetail.name}</Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={styles.label}>Description:</Text>
+              <Text style={styles.value}>{loanDetail.description}</Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={styles.label}>Original Amount:</Text>
+              <Text style={styles.value}>Rp. {loanDetail.ammount.toLocaleString('id-ID')}</Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={styles.label}>Remaining Amount:</Text>
+              <Text style={[styles.value, styles.remainingAmount]}>
+                Rp. {loanDetail.remaining_ammount.toLocaleString('id-ID')}
+              </Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={styles.label}>Date:</Text>
+              <Text style={styles.value}>{format(new Date(loanDetail.date), 'MM/dd/yyyy')}</Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={styles.label}>Category:</Text>
+              <Text style={styles.value}>{loanDetail.category.name}</Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={styles.label}>Wallet:</Text>
+              <Text style={styles.value}>{loanDetail.wallet.name}</Text>
+            </View>
           </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.label}>Description:</Text>
-            <Text style={styles.value}>{loanDetail.description}</Text>
-          </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.label}>Original Amount:</Text>
-            <Text style={styles.value}>Rp. {loanDetail.ammount.toLocaleString('id-ID')}</Text>
-          </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.label}>Remaining Amount:</Text>
-            <Text style={[styles.value, styles.remainingAmount]}>
-              Rp. {loanDetail.remaining_ammount.toLocaleString('id-ID')}
-            </Text>
-          </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.label}>Date:</Text>
-            <Text style={styles.value}>{format(new Date(loanDetail.date), 'MM/dd/yyyy')}</Text>
-          </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.label}>Category:</Text>
-            <Text style={styles.value}>{loanDetail.category.name}</Text>
-          </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.label}>Wallet:</Text>
-            <Text style={styles.value}>{loanDetail.wallet.name}</Text>
-          </View>
-        </View>
 
-        {/* Collection History */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Collection History</Text>
-          {loanDetail.children.length === 0 ? (
-            <Text style={styles.noCollectionsText}>No collections made yet</Text>
-          ) : (
-            loanDetail.children.map((collection, index) => (
-              <View key={collection._id} style={styles.collectionItem}>
-                <View style={styles.collectionHeader}>
-                  <Text style={styles.collectionTitle}>{collection.description}</Text>
-                  <Text style={styles.collectionAmount}>
-                    Rp. {collection.ammount.toLocaleString('id-ID')}
+          {/* Collection History */}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Collection History</Text>
+            {loanDetail.children.length === 0 ? (
+              <Text style={styles.noCollectionsText}>No collections made yet</Text>
+            ) : (
+              loanDetail.children.map((collection, index) => (
+                <View key={collection._id} style={styles.collectionItem}>
+                  <View style={styles.collectionHeader}>
+                    <Text style={styles.collectionTitle}>{collection.description}</Text>
+                    <Text style={styles.collectionAmount}>
+                      Rp. {collection.ammount.toLocaleString('id-ID')}
+                    </Text>
+                  </View>
+                  <Text style={styles.collectionDate}>
+                    {format(new Date(collection.date), 'MMM dd, yyyy HH:mm')}
                   </Text>
                 </View>
-                <Text style={styles.collectionDate}>
-                  {format(new Date(collection.date), 'MMM dd, yyyy HH:mm')}
-                </Text>
-              </View>
-            ))
-          )}
-        </View>
+              ))
+            )}
+          </View>
+          <View style={{ height: 100 }} />
+        </ScrollView>
 
-        {/* Action Button */}
+        {/* Fixed Action Button */}
         {loanDetail.remaining_ammount > 0 && (
-          <TouchableOpacity
-            style={styles.collectButton}
-            onPress={() => navigation.navigate('DebtCollection', { loanItem: loanDetail })}>
-            <Text style={styles.collectButtonText}>Collect Payment</Text>
-          </TouchableOpacity>
+          <View
+            style={{
+              backgroundColor: 'white',
+              paddingHorizontal: 20,
+              paddingTop: 16,
+              paddingBottom: insets.bottom + 20,
+              borderTopWidth: 1,
+              borderColor: '#E5E7EB',
+              shadowColor: '#000',
+              shadowOpacity: 0.1,
+              shadowRadius: 8,
+              elevation: 4,
+            }}>
+            <Pressable
+              style={styles.collectButton}
+              onPress={() => navigation.navigate('DebtCollection', { loanItem: loanDetail })}>
+              <Text style={styles.collectButtonText}>Collect Payment</Text>
+            </Pressable>
+          </View>
         )}
-      </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -135,7 +163,7 @@ export default function LoanDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#F9FAFB',
   },
   scrollView: {
     flex: 1,
@@ -232,15 +260,18 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   collectButton: {
-    backgroundColor: '#3b667c',
-    paddingVertical: 16,
-    borderRadius: 8,
+    backgroundColor: '#10B981',
+    borderRadius: 16,
+    paddingVertical: 18,
     alignItems: 'center',
-    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   collectButtonText: {
     color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '700',
   },
 });
