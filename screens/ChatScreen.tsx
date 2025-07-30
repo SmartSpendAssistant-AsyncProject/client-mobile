@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -48,6 +48,9 @@ export default function ChatScreen() {
   //   State management for chat functionality
   const [messages, setMessages] = useState<Message[]>([]);
 
+  //   Ref for scroll view auto-scroll
+  const scrollViewRef = useRef<ScrollView>(null);
+
   //   Input state management
   const [inputText, setInputText] = useState('');
   const [selectedMode, setSelectedMode] = useState<'ask' | 'input'>('ask');
@@ -56,6 +59,9 @@ export default function ChatScreen() {
   //   Voice recording state management
   const [isVoiceModalVisible, setIsVoiceModalVisible] = useState(false);
   const [isProcessingVoice, setIsProcessingVoice] = useState(false);
+
+  //   AI typing indicator state
+  const [isAiTyping, setIsAiTyping] = useState(false);
 
   //   Wallet management state
   const [userWallets, setUserWallets] = useState<WalletItem[]>([]);
@@ -84,6 +90,15 @@ export default function ChatScreen() {
   useEffect(() => {
     loadUserWallets();
   }, []);
+
+  //   Auto-scroll to bottom when new messages arrive or AI is typing
+  useEffect(() => {
+    if (messages.length > 0 || isAiTyping) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  }, [messages, isAiTyping]);
 
   //   Function to load user wallets from API
   const loadUserWallets = async () => {
@@ -189,6 +204,8 @@ export default function ChatScreen() {
         }
 
         //   Send message to AI backend
+        setIsAiTyping(true); // Show AI typing indicator
+
         const response = await VoiceApiService.sendMessageToAI(
           messageText,
           selectedMode,
@@ -209,9 +226,13 @@ export default function ChatScreen() {
         };
 
         //   Add AI response to messages
+        setIsAiTyping(false); // Hide AI typing indicator
         setMessages((prevMessages) => [...prevMessages, aiResponse]);
       } catch (error) {
         console.error('  Failed to send message:', error);
+
+        //   Hide AI typing indicator on error
+        setIsAiTyping(false);
 
         //   Add error message to chat
         const errorMessage: Message = {
@@ -271,6 +292,9 @@ export default function ChatScreen() {
 
       setMessages((prevMessages) => [...prevMessages, userMessage]);
 
+      //   Show AI typing indicator for voice response
+      setIsAiTyping(true);
+
       //   Add AI response to chat
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -283,9 +307,12 @@ export default function ChatScreen() {
         }),
       };
 
+      //   Hide AI typing indicator and show response
+      setIsAiTyping(false);
       setMessages((prevMessages) => [...prevMessages, aiMessage]);
     } catch (error) {
       console.error('  Voice processing failed:', error);
+      setIsAiTyping(false); // Hide AI typing indicator on error
       Alert.alert('Error', 'Failed to process voice message. Please try again.');
     } finally {
       setIsProcessingVoice(false);
@@ -416,9 +443,91 @@ export default function ChatScreen() {
     }
   };
 
+  //   Render AI typing indicator
+  const renderAiTypingIndicator = () => {
+    if (!isAiTyping) return null;
+
+    return (
+      <View style={{ flexDirection: 'row', gap: 12, marginBottom: 16 }}>
+        {/*   Assistant avatar */}
+        <View
+          style={{
+            width: 32,
+            height: 32,
+            backgroundColor: '#3b667c',
+            borderRadius: 16,
+            justifyContent: 'center',
+            alignItems: 'center',
+            flexShrink: 0,
+          }}>
+          <Bot size={16} color="#FFFFFF" />
+        </View>
+
+        {/*   Typing indicator content */}
+        <View style={{ flex: 1 }}>
+          <View
+            style={{
+              backgroundColor: '#FFFFFF',
+              borderRadius: 12,
+              paddingHorizontal: 12,
+              paddingVertical: 8,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.1,
+              shadowRadius: 2,
+              elevation: 2,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 4,
+            }}>
+            <Text
+              style={{
+                color: '#6B7280',
+                fontSize: 14,
+                fontStyle: 'italic',
+              }}>
+              AI is thinking
+            </Text>
+            {/*   Animated dots */}
+            <View style={{ flexDirection: 'row', gap: 2 }}>
+              <View
+                style={{
+                  width: 4,
+                  height: 4,
+                  backgroundColor: '#6B7280',
+                  borderRadius: 2,
+                  opacity: 0.4,
+                }}
+              />
+              <View
+                style={{
+                  width: 4,
+                  height: 4,
+                  backgroundColor: '#6B7280',
+                  borderRadius: 2,
+                  opacity: 0.6,
+                }}
+              />
+              <View
+                style={{
+                  width: 4,
+                  height: 4,
+                  backgroundColor: '#6B7280',
+                  borderRadius: 2,
+                  opacity: 0.8,
+                }}
+              />
+            </View>
+          </View>
+        </View>
+      </View>
+    );
+  };
+
   useFocusEffect(
     React.useCallback(() => {
       fetchUserProfile();
+      loadUserWallets(); // Auto-refresh wallet data saat screen focus
       return () => {
         console.log('Chat focus effect cleanup');
       };
@@ -568,7 +677,7 @@ export default function ChatScreen() {
                       textAlign: 'center',
                     }}
                     numberOfLines={1}>
-                    Rp. {selectedWallet.balance.toFixed(2)}
+                    Rp {selectedWallet.balance.toLocaleString('id-ID')}
                   </Text>
                 )}
               </View>
@@ -631,7 +740,7 @@ export default function ChatScreen() {
                             fontSize: 12,
                             marginTop: 2,
                           }}>
-                          Rp. {wallet.balance} • {wallet.type}
+                          Rp {wallet.balance.toLocaleString('id-ID')} • {wallet.type}
                         </Text>
                       </TouchableOpacity>
                     ))
@@ -655,6 +764,7 @@ export default function ChatScreen() {
 
         {/*   Chat messages container */}
         <ScrollView
+          ref={scrollViewRef}
           style={{
             flex: 1,
             backgroundColor: '#F9FAFB',
@@ -665,6 +775,8 @@ export default function ChatScreen() {
           contentContainerStyle={{ paddingBottom: 20 }}>
           {/*   Render all messages */}
           {messages.map(renderMessage)}
+          {/*   Render AI typing indicator */}
+          {renderAiTypingIndicator()}
         </ScrollView>
 
         {/*   Input area container */}
