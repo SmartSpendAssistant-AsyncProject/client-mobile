@@ -289,9 +289,9 @@ export default function HomeScreen() {
     const fetchAllData = async () => {
       const access_token = await SecureStore.getItemAsync('access_token');
       if (access_token) {
-        await fetchWallets(access_token);
-        await fetchTransactions(access_token);
-        await fetchNotifications(access_token);
+        fetchWallets(access_token);
+        fetchTransactions(access_token);
+        fetchNotifications(access_token);
       }
     };
     if (isFocused) {
@@ -369,24 +369,26 @@ export default function HomeScreen() {
           activeOpacity={0.7}>
           <Bell size={20} color="#FFFFFF" />
           {unreadNotificationCount > 0 && (
-            <View style={{
-              position: 'absolute',
-              top: -2,
-              right: -2,
-              backgroundColor: '#EF4444',
-              borderRadius: 10,
-              minWidth: 20,
-              height: 20,
-              justifyContent: 'center',
-              alignItems: 'center',
-              borderWidth: 2,
-              borderColor: '#3b667c',
-            }}>
-              <Text style={{
-                color: '#FFFFFF',
-                fontSize: 12,
-                fontWeight: 'bold',
+            <View
+              style={{
+                position: 'absolute',
+                top: -2,
+                right: -2,
+                backgroundColor: '#EF4444',
+                borderRadius: 10,
+                minWidth: 20,
+                height: 20,
+                justifyContent: 'center',
+                alignItems: 'center',
+                borderWidth: 2,
+                borderColor: '#3b667c',
               }}>
+              <Text
+                style={{
+                  color: '#FFFFFF',
+                  fontSize: 12,
+                  fontWeight: 'bold',
+                }}>
                 {unreadNotificationCount > 99 ? '99+' : unreadNotificationCount}
               </Text>
             </View>
