@@ -117,15 +117,6 @@ export default function CreateWalletScreen() {
       style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <ArrowLeft size={24} color="white" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Create Wallet</Text>
-          <View style={styles.headerSpacer} />
-        </View>
-
         {/* Form Content */}
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {/* Wallet Name */}
