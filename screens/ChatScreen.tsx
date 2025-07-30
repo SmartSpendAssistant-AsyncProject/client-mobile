@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, Send, Mic, ChevronDown, Bot, Wallet } from 'lucide-react-native';
@@ -48,6 +49,12 @@ export default function ChatScreen() {
   //   State management for chat functionality
   const [messages, setMessages] = useState<Message[]>([]);
 
+  //   Ref for scroll view auto-scroll
+  const scrollViewRef = useRef<ScrollView>(null);
+
+  //   Ref for wallet refresh interval
+  const walletRefreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
   //   Input state management
   const [inputText, setInputText] = useState('');
   const [selectedMode, setSelectedMode] = useState<'ask' | 'input'>('ask');
@@ -57,11 +64,16 @@ export default function ChatScreen() {
   const [isVoiceModalVisible, setIsVoiceModalVisible] = useState(false);
   const [isProcessingVoice, setIsProcessingVoice] = useState(false);
 
+  //   AI typing indicator state
+  const [isAiTyping, setIsAiTyping] = useState(false);
+
   //   Wallet management state
   const [userWallets, setUserWallets] = useState<WalletItem[]>([]);
   const [selectedWallet, setSelectedWallet] = useState<WalletItem | null>(null);
   const [isWalletDropdownVisible, setIsWalletDropdownVisible] = useState(false);
   const [isLoadingWallets, setIsLoadingWallets] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [walletUpdateIndicator, setWalletUpdateIndicator] = useState(false);
 
   // User data state
   const [userProfile, setUserProfile] = useState({
@@ -84,6 +96,80 @@ export default function ChatScreen() {
   useEffect(() => {
     loadUserWallets();
   }, []);
+
+  //   Function to silently refresh wallet data (no loading indicator)
+  const silentRefreshWallets = useCallback(async () => {
+    try {
+      console.log(' Silent wallet refresh...');
+      setWalletUpdateIndicator(true); // Show subtle update indicator
+
+      const wallets = await getUserWallets();
+
+      if (wallets && wallets.length > 0) {
+        const currentSelectedId = selectedWallet?._id;
+        const previousBalance = selectedWallet?.balance;
+
+        // Update wallets array
+        setUserWallets(wallets);
+
+        // Update selected wallet with new data if it still exists
+        if (currentSelectedId) {
+          const updatedSelectedWallet = wallets.find((w) => w._id === currentSelectedId);
+          if (updatedSelectedWallet) {
+            setSelectedWallet(updatedSelectedWallet);
+
+            // Log balance change
+            if (
+              previousBalance !== undefined &&
+              previousBalance !== updatedSelectedWallet.balance
+            ) {
+              const change = updatedSelectedWallet.balance - previousBalance;
+              console.log(' Wallet balance changed:', {
+                previous: previousBalance,
+                current: updatedSelectedWallet.balance,
+                change: change > 0 ? `+${change}` : change,
+              });
+            }
+          }
+        } else if (!selectedWallet && wallets.length > 0) {
+          // If no wallet selected, select the first one
+          setSelectedWallet(wallets[0]);
+        }
+      }
+    } catch (error) {
+      console.error(' Silent wallet refresh failed:', error);
+      // Don't show alert for silent refresh failures
+    } finally {
+      // Hide update indicator after a short delay
+      setTimeout(() => {
+        setWalletUpdateIndicator(false);
+      }, 500);
+    }
+  }, [selectedWallet]);
+
+  //   Auto-scroll to bottom when new messages arrive or AI is typing
+  useEffect(() => {
+    if (messages.length > 0 || isAiTyping) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  }, [messages, isAiTyping]);
+
+  //   Setup periodic wallet refresh when component mounts
+  useEffect(() => {
+    // Start periodic wallet refresh every 30 seconds
+    walletRefreshIntervalRef.current = setInterval(() => {
+      silentRefreshWallets();
+    }, 30000); // 30 seconds
+
+    return () => {
+      // Cleanup interval on unmount
+      if (walletRefreshIntervalRef.current) {
+        clearInterval(walletRefreshIntervalRef.current);
+      }
+    };
+  }, [silentRefreshWallets]);
 
   //   Function to load user wallets from API
   const loadUserWallets = async () => {
@@ -118,6 +204,21 @@ export default function ChatScreen() {
     setIsWalletDropdownVisible(false);
   };
 
+  //   Handle pull to refresh for wallet data
+  const onRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([
+        silentRefreshWallets(),
+        new Promise((resolve) => setTimeout(resolve, 1000)), // Minimum 1 second for UX
+      ]);
+    } catch (error) {
+      console.error(' Refresh failed:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [silentRefreshWallets]);
+
   //   Handle back navigation
   const handleBackPress = () => {
     navigation.goBack();
@@ -146,12 +247,12 @@ export default function ChatScreen() {
         //   Get authentication token and use selected wallet
         const authToken = await getAuthToken();
 
-        console.log('🔑 Auth token:', authToken ? 'Token found' : 'No token');
-        console.log('💰 Selected wallet:', selectedWallet);
+        console.log(' Auth token:', authToken ? 'Token found' : 'No token');
+        console.log(' Selected wallet:', selectedWallet);
 
         if (!authToken) {
           //   For testing purposes, create a mock token or skip auth
-          console.log('⚠️ No auth token found, using demo mode');
+          console.log(' No auth token found, using demo mode');
 
           //   Create a simple demo response instead of API call
           const demoResponse: Message = {
@@ -171,7 +272,7 @@ export default function ChatScreen() {
 
         if (!selectedWallet) {
           //   Handle case where user has no wallet selected
-          console.log('⚠️ No wallet selected');
+          console.log(' No wallet selected');
 
           const noWalletResponse: Message = {
             id: (Date.now() + 1).toString(),
@@ -189,6 +290,8 @@ export default function ChatScreen() {
         }
 
         //   Send message to AI backend
+        setIsAiTyping(true); // Show AI typing indicator
+
         const response = await VoiceApiService.sendMessageToAI(
           messageText,
           selectedMode,
@@ -209,9 +312,18 @@ export default function ChatScreen() {
         };
 
         //   Add AI response to messages
+        setIsAiTyping(false); // Hide AI typing indicator
         setMessages((prevMessages) => [...prevMessages, aiResponse]);
+
+        //   Trigger wallet refresh after AI response (might have created transaction)
+        setTimeout(() => {
+          silentRefreshWallets();
+        }, 2000); // Refresh after 2 seconds
       } catch (error) {
         console.error('  Failed to send message:', error);
+
+        //   Hide AI typing indicator on error
+        setIsAiTyping(false);
 
         //   Add error message to chat
         const errorMessage: Message = {
@@ -271,6 +383,9 @@ export default function ChatScreen() {
 
       setMessages((prevMessages) => [...prevMessages, userMessage]);
 
+      //   Show AI typing indicator for voice response
+      setIsAiTyping(true);
+
       //   Add AI response to chat
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -283,9 +398,17 @@ export default function ChatScreen() {
         }),
       };
 
+      //   Hide AI typing indicator and show response
+      setIsAiTyping(false);
       setMessages((prevMessages) => [...prevMessages, aiMessage]);
+
+      //   Trigger wallet refresh after voice AI response (might have created transaction)
+      setTimeout(() => {
+        silentRefreshWallets();
+      }, 2000); // Refresh after 2 seconds
     } catch (error) {
       console.error('  Voice processing failed:', error);
+      setIsAiTyping(false); // Hide AI typing indicator on error
       Alert.alert('Error', 'Failed to process voice message. Please try again.');
     } finally {
       setIsProcessingVoice(false);
@@ -416,9 +539,91 @@ export default function ChatScreen() {
     }
   };
 
+  //   Render AI typing indicator
+  const renderAiTypingIndicator = () => {
+    if (!isAiTyping) return null;
+
+    return (
+      <View style={{ flexDirection: 'row', gap: 12, marginBottom: 16 }}>
+        {/*   Assistant avatar */}
+        <View
+          style={{
+            width: 32,
+            height: 32,
+            backgroundColor: '#3b667c',
+            borderRadius: 16,
+            justifyContent: 'center',
+            alignItems: 'center',
+            flexShrink: 0,
+          }}>
+          <Bot size={16} color="#FFFFFF" />
+        </View>
+
+        {/*   Typing indicator content */}
+        <View style={{ flex: 1 }}>
+          <View
+            style={{
+              backgroundColor: '#FFFFFF',
+              borderRadius: 12,
+              paddingHorizontal: 12,
+              paddingVertical: 8,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.1,
+              shadowRadius: 2,
+              elevation: 2,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 4,
+            }}>
+            <Text
+              style={{
+                color: '#6B7280',
+                fontSize: 14,
+                fontStyle: 'italic',
+              }}>
+              AI is thinking
+            </Text>
+            {/*   Animated dots */}
+            <View style={{ flexDirection: 'row', gap: 2 }}>
+              <View
+                style={{
+                  width: 4,
+                  height: 4,
+                  backgroundColor: '#6B7280',
+                  borderRadius: 2,
+                  opacity: 0.4,
+                }}
+              />
+              <View
+                style={{
+                  width: 4,
+                  height: 4,
+                  backgroundColor: '#6B7280',
+                  borderRadius: 2,
+                  opacity: 0.6,
+                }}
+              />
+              <View
+                style={{
+                  width: 4,
+                  height: 4,
+                  backgroundColor: '#6B7280',
+                  borderRadius: 2,
+                  opacity: 0.8,
+                }}
+              />
+            </View>
+          </View>
+        </View>
+      </View>
+    );
+  };
+
   useFocusEffect(
     React.useCallback(() => {
       fetchUserProfile();
+      loadUserWallets(); // Auto-refresh wallet data saat screen focus
       return () => {
         console.log('Chat focus effect cleanup');
       };
@@ -568,7 +773,8 @@ export default function ChatScreen() {
                       textAlign: 'center',
                     }}
                     numberOfLines={1}>
-                    Rp. {selectedWallet.balance.toFixed(2)}
+                    Rp {selectedWallet.balance.toLocaleString('id-ID')}
+                    {walletUpdateIndicator && ' '}
                   </Text>
                 )}
               </View>
@@ -631,7 +837,7 @@ export default function ChatScreen() {
                             fontSize: 12,
                             marginTop: 2,
                           }}>
-                          Rp. {wallet.balance} • {wallet.type}
+                          Rp {wallet.balance.toLocaleString('id-ID')} • {wallet.type}
                         </Text>
                       </TouchableOpacity>
                     ))
@@ -655,6 +861,7 @@ export default function ChatScreen() {
 
         {/*   Chat messages container */}
         <ScrollView
+          ref={scrollViewRef}
           style={{
             flex: 1,
             backgroundColor: '#F9FAFB',
@@ -662,9 +869,21 @@ export default function ChatScreen() {
             paddingVertical: 16,
           }}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 20 }}>
+          contentContainerStyle={{ paddingBottom: 20 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={onRefresh}
+              colors={['#3b667c']}
+              tintColor="#3b667c"
+              title="Updating wallet data..."
+              titleColor="#6B7280"
+            />
+          }>
           {/*   Render all messages */}
           {messages.map(renderMessage)}
+          {/*   Render AI typing indicator */}
+          {renderAiTypingIndicator()}
         </ScrollView>
 
         {/*   Input area container */}
