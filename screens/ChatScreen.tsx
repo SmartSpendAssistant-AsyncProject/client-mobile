@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, Send, Mic, ChevronDown, Bot, Wallet } from 'lucide-react-native';
@@ -51,6 +52,9 @@ export default function ChatScreen() {
   //   Ref for scroll view auto-scroll
   const scrollViewRef = useRef<ScrollView>(null);
 
+  //   Ref for wallet refresh interval
+  const walletRefreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
   //   Input state management
   const [inputText, setInputText] = useState('');
   const [selectedMode, setSelectedMode] = useState<'ask' | 'input'>('ask');
@@ -68,6 +72,8 @@ export default function ChatScreen() {
   const [selectedWallet, setSelectedWallet] = useState<WalletItem | null>(null);
   const [isWalletDropdownVisible, setIsWalletDropdownVisible] = useState(false);
   const [isLoadingWallets, setIsLoadingWallets] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [walletUpdateIndicator, setWalletUpdateIndicator] = useState(false);
 
   // User data state
   const [userProfile, setUserProfile] = useState({
@@ -91,6 +97,56 @@ export default function ChatScreen() {
     loadUserWallets();
   }, []);
 
+  //   Function to silently refresh wallet data (no loading indicator)
+  const silentRefreshWallets = useCallback(async () => {
+    try {
+      console.log(' Silent wallet refresh...');
+      setWalletUpdateIndicator(true); // Show subtle update indicator
+
+      const wallets = await getUserWallets();
+
+      if (wallets && wallets.length > 0) {
+        const currentSelectedId = selectedWallet?._id;
+        const previousBalance = selectedWallet?.balance;
+
+        // Update wallets array
+        setUserWallets(wallets);
+
+        // Update selected wallet with new data if it still exists
+        if (currentSelectedId) {
+          const updatedSelectedWallet = wallets.find((w) => w._id === currentSelectedId);
+          if (updatedSelectedWallet) {
+            setSelectedWallet(updatedSelectedWallet);
+
+            // Log balance change
+            if (
+              previousBalance !== undefined &&
+              previousBalance !== updatedSelectedWallet.balance
+            ) {
+              const change = updatedSelectedWallet.balance - previousBalance;
+              console.log(' Wallet balance changed:', {
+                previous: previousBalance,
+                current: updatedSelectedWallet.balance,
+                change: change > 0 ? `+${change}` : change,
+              });
+            }
+          }
+        } else if (!selectedWallet && wallets.length > 0) {
+          // If no wallet selected, select the first one
+          setSelectedWallet(wallets[0]);
+        }
+      }
+    } catch (error) {
+      console.error(' Silent wallet refresh failed:', error);
+      // Don't show alert for silent refresh failures
+    } finally {
+      // Hide update indicator after a short delay
+      setTimeout(() => {
+        setWalletUpdateIndicator(false);
+      }, 500);
+    }
+  }, [selectedWallet]);
+
   //   Auto-scroll to bottom when new messages arrive or AI is typing
   useEffect(() => {
     if (messages.length > 0 || isAiTyping) {
@@ -99,6 +155,21 @@ export default function ChatScreen() {
       }, 100);
     }
   }, [messages, isAiTyping]);
+
+  //   Setup periodic wallet refresh when component mounts
+  useEffect(() => {
+    // Start periodic wallet refresh every 30 seconds
+    walletRefreshIntervalRef.current = setInterval(() => {
+      silentRefreshWallets();
+    }, 30000); // 30 seconds
+
+    return () => {
+      // Cleanup interval on unmount
+      if (walletRefreshIntervalRef.current) {
+        clearInterval(walletRefreshIntervalRef.current);
+      }
+    };
+  }, [silentRefreshWallets]);
 
   //   Function to load user wallets from API
   const loadUserWallets = async () => {
@@ -133,6 +204,21 @@ export default function ChatScreen() {
     setIsWalletDropdownVisible(false);
   };
 
+  //   Handle pull to refresh for wallet data
+  const onRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([
+        silentRefreshWallets(),
+        new Promise((resolve) => setTimeout(resolve, 1000)), // Minimum 1 second for UX
+      ]);
+    } catch (error) {
+      console.error(' Refresh failed:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [silentRefreshWallets]);
+
   //   Handle back navigation
   const handleBackPress = () => {
     navigation.goBack();
@@ -161,12 +247,12 @@ export default function ChatScreen() {
         //   Get authentication token and use selected wallet
         const authToken = await getAuthToken();
 
-        console.log('🔑 Auth token:', authToken ? 'Token found' : 'No token');
-        console.log('💰 Selected wallet:', selectedWallet);
+        console.log(' Auth token:', authToken ? 'Token found' : 'No token');
+        console.log(' Selected wallet:', selectedWallet);
 
         if (!authToken) {
           //   For testing purposes, create a mock token or skip auth
-          console.log('⚠️ No auth token found, using demo mode');
+          console.log(' No auth token found, using demo mode');
 
           //   Create a simple demo response instead of API call
           const demoResponse: Message = {
@@ -186,7 +272,7 @@ export default function ChatScreen() {
 
         if (!selectedWallet) {
           //   Handle case where user has no wallet selected
-          console.log('⚠️ No wallet selected');
+          console.log(' No wallet selected');
 
           const noWalletResponse: Message = {
             id: (Date.now() + 1).toString(),
@@ -228,6 +314,11 @@ export default function ChatScreen() {
         //   Add AI response to messages
         setIsAiTyping(false); // Hide AI typing indicator
         setMessages((prevMessages) => [...prevMessages, aiResponse]);
+
+        //   Trigger wallet refresh after AI response (might have created transaction)
+        setTimeout(() => {
+          silentRefreshWallets();
+        }, 2000); // Refresh after 2 seconds
       } catch (error) {
         console.error('  Failed to send message:', error);
 
@@ -310,6 +401,11 @@ export default function ChatScreen() {
       //   Hide AI typing indicator and show response
       setIsAiTyping(false);
       setMessages((prevMessages) => [...prevMessages, aiMessage]);
+
+      //   Trigger wallet refresh after voice AI response (might have created transaction)
+      setTimeout(() => {
+        silentRefreshWallets();
+      }, 2000); // Refresh after 2 seconds
     } catch (error) {
       console.error('  Voice processing failed:', error);
       setIsAiTyping(false); // Hide AI typing indicator on error
@@ -678,6 +774,7 @@ export default function ChatScreen() {
                     }}
                     numberOfLines={1}>
                     Rp {selectedWallet.balance.toLocaleString('id-ID')}
+                    {walletUpdateIndicator && ' '}
                   </Text>
                 )}
               </View>
@@ -772,7 +869,17 @@ export default function ChatScreen() {
             paddingVertical: 16,
           }}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 20 }}>
+          contentContainerStyle={{ paddingBottom: 20 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={onRefresh}
+              colors={['#3b667c']}
+              tintColor="#3b667c"
+              title="Updating wallet data..."
+              titleColor="#6B7280"
+            />
+          }>
           {/*   Render all messages */}
           {messages.map(renderMessage)}
           {/*   Render AI typing indicator */}
