@@ -64,7 +64,11 @@ export default function UpdateScreen() {
   const [expenseCategories, setExpenseCategories] = useState<{ label: string; value: string }[]>(
     []
   );
-  const [transactionType, setTransactionType] = useState<'income' | 'expense'>('expense');
+  const [debtCategories, setDebtCategories] = useState<{ label: string; value: string }[]>([]);
+  const [loanCategories, setLoanCategories] = useState<{ label: string; value: string }[]>([]);
+  const [transactionType, setTransactionType] = useState<'income' | 'expense' | 'debt' | 'loan'>(
+    'expense'
+  );
 
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [showWalletDropdown, setShowWalletDropdown] = useState(false);
@@ -114,8 +118,16 @@ export default function UpdateScreen() {
         const expense = categoryOptions.filter(
           (cat: { label: string; value: string; type: string }) => cat.type === 'expense'
         );
+        const debt = categoryOptions.filter(
+          (cat: { label: string; value: string; type: string }) => cat.type === 'debt'
+        );
+        const loan = categoryOptions.filter(
+          (cat: { label: string; value: string; type: string }) => cat.type === 'loan'
+        );
         setIncomeCategories(income);
         setExpenseCategories(expense);
+        setDebtCategories(debt);
+        setLoanCategories(loan);
       }
     };
 
@@ -226,7 +238,7 @@ export default function UpdateScreen() {
   };
 
   //   Transaction type selection handler
-  const handleTypeSelect = (type: 'income' | 'expense') => {
+  const handleTypeSelect = (type: 'income' | 'expense' | 'debt' | 'loan') => {
     setTransactionType(type);
     setShowTypeDropdown(false);
     // Reset category when type changes
@@ -236,7 +248,18 @@ export default function UpdateScreen() {
 
   //   Get categories based on transaction type
   const getCurrentCategories = () => {
-    return transactionType === 'income' ? incomeCategories : expenseCategories;
+    switch (transactionType) {
+      case 'income':
+        return incomeCategories;
+      case 'expense':
+        return expenseCategories;
+      case 'debt':
+        return debtCategories;
+      case 'loan':
+        return loanCategories;
+      default:
+        return expenseCategories;
+    }
   };
 
   //   Wallet selection handler
@@ -334,12 +357,17 @@ export default function UpdateScreen() {
   };
 
   //   Custom dropdown for transaction type
-  const renderTypeDropdown = (show: boolean, onSelect: (type: 'income' | 'expense') => void) => {
+  const renderTypeDropdown = (
+    show: boolean,
+    onSelect: (type: 'income' | 'expense' | 'debt' | 'loan') => void
+  ) => {
     if (!show) return null;
 
     const typeOptions = [
       { label: 'Income', value: 'income' },
       { label: 'Expense', value: 'expense' },
+      { label: 'Debt', value: 'debt' },
+      { label: 'Loan', value: 'loan' },
     ];
 
     return (
@@ -348,7 +376,7 @@ export default function UpdateScreen() {
           <TouchableOpacity
             key={item.value}
             style={styles.dropdownItem}
-            onPress={() => onSelect(item.value as 'income' | 'expense')}>
+            onPress={() => onSelect(item.value as 'income' | 'expense' | 'debt' | 'loan')}>
             <Text style={styles.dropdownItemText}>{item.label}</Text>
           </TouchableOpacity>
         ))}
@@ -362,11 +390,6 @@ export default function UpdateScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/*   Header section with title */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Update Transaction</Text>
-      </View>
-
       {/*   Main form content with scroll */}
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.formContainer}>
@@ -424,7 +447,15 @@ export default function UpdateScreen() {
                   styles.selectText,
                   transactionType ? styles.selectedText : styles.placeholderText,
                 ]}>
-                {transactionType === 'income' ? 'Income' : 'Expense'}
+                {transactionType === 'income'
+                  ? 'Income'
+                  : transactionType === 'expense'
+                    ? 'Expense'
+                    : transactionType === 'debt'
+                      ? 'Debt'
+                      : transactionType === 'loan'
+                        ? 'Loan'
+                        : 'Select Type'}
               </Text>
               <ChevronDown
                 size={20}

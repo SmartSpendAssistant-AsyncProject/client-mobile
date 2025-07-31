@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Button, KeyboardAvoidingView, Platform, Alert, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Button,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
+  ActivityIndicator,
+  Pressable,
+  Text,
+} from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
 import { RootStackParamList, RootStackNavigationProp } from 'types/navigation';
@@ -50,13 +59,16 @@ export default function RepaymentScreen() {
     }
 
     if (amount > debtItem.remaining_ammount) {
-      Alert.alert('Error', `Amount cannot exceed remaining debt amount (Rp. ${debtItem.remaining_ammount.toLocaleString('id-ID')})`);
+      Alert.alert(
+        'Error',
+        `Amount cannot exceed remaining debt amount (Rp. ${debtItem.remaining_ammount.toLocaleString('id-ID')})`
+      );
       return;
     }
 
     try {
       setIsLoading(true);
-      
+
       const repaymentData = {
         description: `Repayment for ${debtItem.name}`,
         ammount: amount,
@@ -65,10 +77,22 @@ export default function RepaymentScreen() {
       };
 
       await DebtLoanService.createRepayment(repaymentData);
-      
-      Alert.alert('Success', `Payment of Rp ${amount.toLocaleString('id-ID')} has been processed successfully!`, [
-        { text: 'OK', onPress: () => navigation.navigate('Debt') }
-      ]);
+
+      Alert.alert(
+        'Success',
+        `Payment of Rp ${amount.toLocaleString('id-ID')} has been processed successfully!`,
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'MainTabs', params: { screen: 'Home' } }],
+              });
+            },
+          },
+        ]
+      );
     } catch (error) {
       console.error('Error creating repayment:', error);
       Alert.alert('Error', 'Failed to process payment. Please try again.');
@@ -88,7 +112,7 @@ export default function RepaymentScreen() {
   }
 
   // Convert wallet data to format expected by CardRepayCollect
-  const walletOptions = wallets.map(wallet => ({
+  const walletOptions = wallets.map((wallet) => ({
     id: wallet._id,
     name: wallet.name,
     balance: wallet.balance,
@@ -97,9 +121,9 @@ export default function RepaymentScreen() {
   return (
     <SafeAreaProvider>
       <KeyboardAvoidingView
-        style={{ flex: 1 }}
+        style={{ flex: 1, backgroundColor: '#F9FAFB' }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <View style={{ flex: 1, padding: 16 }}>
+        <View style={{ flex: 1 }}>
           <CardRepayCollect
             amount={amount}
             wallets={walletOptions}
@@ -114,17 +138,38 @@ export default function RepaymentScreen() {
         <View
           style={{
             backgroundColor: 'white',
-            paddingHorizontal: 16,
-            paddingTop: 12,
-            paddingBottom: insets.bottom + 16,
+            paddingHorizontal: 20,
+            paddingTop: 16,
+            paddingBottom: insets.bottom + 20,
             borderTopWidth: 1,
-            borderColor: '#ddd',
+            borderColor: '#E5E7EB',
+            shadowColor: '#000',
+            shadowOpacity: 0.1,
+            shadowRadius: 8,
+            elevation: 4,
           }}>
-          <Button 
-            title={isLoading ? "Processing..." : "Process Payment"} 
-            onPress={handleRepay} 
-            disabled={isLoading}
-          />
+          <Pressable
+            style={{
+              backgroundColor: isLoading ? '#9CA3AF' : '#3b667c',
+              borderRadius: 16,
+              paddingVertical: 18,
+              alignItems: 'center',
+              shadowColor: '#000',
+              shadowOpacity: 0.2,
+              shadowRadius: 8,
+              elevation: 4,
+            }}
+            onPress={handleRepay}
+            disabled={isLoading}>
+            <Text
+              style={{
+                color: 'white',
+                fontSize: 18,
+                fontWeight: '700',
+              }}>
+              {isLoading ? 'Processing Payment...' : 'Process Payment'}
+            </Text>
+          </Pressable>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaProvider>

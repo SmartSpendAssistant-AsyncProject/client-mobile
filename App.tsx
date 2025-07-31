@@ -2,7 +2,7 @@ import './global.css';
 import { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import * as SecureStore from 'expo-secure-store';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './utils/AuthContext';
 
 import LoginScreen from './screens/LoginScreen';
@@ -37,24 +37,88 @@ function AppNavigator() {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName={isAuthenticated ? "MainTabs" : "Login"}>
+      <Stack.Navigator
+        initialRouteName={isAuthenticated ? 'MainTabs' : 'Login'}
+        screenOptions={{
+          headerShown: false, // Hide headers by default
+          headerStyle: {
+            backgroundColor: '#3b667c',
+          },
+          headerTintColor: '#FFFFFF',
+          headerTitleStyle: {
+            fontSize: 18,
+            fontWeight: '500',
+          },
+          headerTitleAlign: 'center',
+        }}>
         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
-
         <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
         <Stack.Screen name="MainTabs" component={MainTabs} options={{ headerShown: false }} />
-        <Stack.Screen name="Wallets" component={WalletsScreen} />
-        <Stack.Screen name="CreateWallet" component={CreateWalletScreen} />
-        <Stack.Screen name="Debt" component={DebtScreen} />
-        <Stack.Screen name="DebtDetail" component={DebtDetailScreen} />
-        <Stack.Screen name="Repayment" component={RepaymentScreen} />
-        <Stack.Screen name="Loan" component={LoanScreen} />
-        <Stack.Screen name="LoanDetail" component={LoanDetailScreen} />
-        <Stack.Screen name="DebtCollection" component={DebtcollectionScreen} />
-        <Stack.Screen name="CreateCategory" component={CreateCategoryScreen} />
-        <Stack.Screen name="UpgradePlan" component={UpgradePlanScreen} />
-        <Stack.Screen name="Notification" component={NotificationScreen} />
-        <Stack.Screen name="NotificationDetail" component={NotificationDetailScreen} />
-        <Stack.Screen name="Update" component={UpdateScreen} />
+        <Stack.Screen
+          name="Wallets"
+          component={WalletsScreen}
+          options={{ headerShown: true, title: 'My Wallets' }}
+        />
+        <Stack.Screen
+          name="CreateWallet"
+          component={CreateWalletScreen}
+          options={{ headerShown: true, title: 'Create Wallet' }}
+        />
+        <Stack.Screen
+          name="Debt"
+          component={DebtScreen}
+          options={{ headerShown: true, title: 'Debt Management' }}
+        />
+        <Stack.Screen
+          name="DebtDetail"
+          component={DebtDetailScreen}
+          options={{ headerShown: true, title: 'Debt Details' }}
+        />
+        <Stack.Screen
+          name="Repayment"
+          component={RepaymentScreen}
+          options={{ headerShown: true, title: 'Repayment' }}
+        />
+        <Stack.Screen
+          name="Loan"
+          component={LoanScreen}
+          options={{ headerShown: true, title: 'Loan Management' }}
+        />
+        <Stack.Screen
+          name="LoanDetail"
+          component={LoanDetailScreen}
+          options={{ headerShown: true, title: 'Loan Details' }}
+        />
+        <Stack.Screen
+          name="DebtCollection"
+          component={DebtcollectionScreen}
+          options={{ headerShown: true, title: 'Debt Collection' }}
+        />
+        <Stack.Screen
+          name="CreateCategory"
+          component={CreateCategoryScreen}
+          options={{ headerShown: true, title: 'Create Category' }}
+        />
+        <Stack.Screen
+          name="UpgradePlan"
+          component={UpgradePlanScreen}
+          options={{ headerShown: true, title: 'Upgrade Plan' }}
+        />
+        <Stack.Screen
+          name="Notification"
+          component={NotificationScreen}
+          options={{ headerShown: true, title: 'Notifications' }}
+        />
+        <Stack.Screen
+          name="NotificationDetail"
+          component={NotificationDetailScreen}
+          options={{ headerShown: true, title: 'Notification Detail' }}
+        />
+        <Stack.Screen
+          name="Update"
+          component={UpdateScreen}
+          options={{ headerShown: true, title: 'Edit Transaction' }}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );
@@ -62,8 +126,10 @@ function AppNavigator() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppNavigator />
-    </AuthProvider>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <AppNavigator />
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }

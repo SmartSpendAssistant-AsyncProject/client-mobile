@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Button, KeyboardAvoidingView, Platform, Alert, ActivityIndicator } from 'react-native';
+import { View, Button, KeyboardAvoidingView, Platform, Alert, ActivityIndicator, Pressable, Text } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
 import { RootStackParamList, RootStackNavigationProp } from 'types/navigation';
@@ -60,9 +60,19 @@ export default function DebtCollectionScreen() {
 
       await DebtLoanService.createCollection(collectionData);
       
-      Alert.alert('Success', `Collection of Rp ${amount.toLocaleString('id-ID')} has been processed successfully!`, [
-        { text: 'OK', onPress: () => navigation.navigate('Loan') }
-      ]);
+      Alert.alert(
+        'Success',
+        `Collection of Rp ${amount.toLocaleString('id-ID')} has been processed successfully!`,
+        [{ 
+          text: 'OK', 
+          onPress: () => {
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'MainTabs', params: { screen: 'Home' } }],
+            });
+          }
+        }]
+      );
     } catch (error) {
       console.error('Error creating collection:', error);
       Alert.alert('Error', 'Failed to process collection. Please try again.');
@@ -91,9 +101,9 @@ export default function DebtCollectionScreen() {
   return (
     <SafeAreaProvider>
       <KeyboardAvoidingView
-        style={{ flex: 1 }}
+        style={{ flex: 1, backgroundColor: '#F9FAFB' }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <View style={{ flex: 1, padding: 16 }}>
+        <View style={{ flex: 1 }}>
           <CardRepayCollect
             amount={amount}
             wallets={walletOptions}
@@ -108,17 +118,38 @@ export default function DebtCollectionScreen() {
         <View
           style={{
             backgroundColor: 'white',
-            paddingHorizontal: 16,
-            paddingTop: 12,
-            paddingBottom: insets.bottom + 16,
+            paddingHorizontal: 20,
+            paddingTop: 16,
+            paddingBottom: insets.bottom + 20,
             borderTopWidth: 1,
-            borderColor: '#ddd',
+            borderColor: '#E5E7EB',
+            shadowColor: '#000',
+            shadowOpacity: 0.1,
+            shadowRadius: 8,
+            elevation: 4,
           }}>
-          <Button 
-            title={isLoading ? "Processing..." : "Confirm Collection"} 
+          <Pressable
+            style={{
+              backgroundColor: isLoading ? '#9CA3AF' : '#10B981',
+              borderRadius: 16,
+              paddingVertical: 18,
+              alignItems: 'center',
+              shadowColor: '#000',
+              shadowOpacity: 0.2,
+              shadowRadius: 8,
+              elevation: 4,
+            }}
             onPress={handleCollect}
-            disabled={isLoading}
-          />
+            disabled={isLoading}>
+            <Text
+              style={{
+                color: 'white',
+                fontSize: 18,
+                fontWeight: '700',
+              }}>
+              {isLoading ? "Processing Collection..." : "Confirm Collection"}
+            </Text>
+          </Pressable>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaProvider>

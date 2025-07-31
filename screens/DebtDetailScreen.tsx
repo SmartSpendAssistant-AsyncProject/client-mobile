@@ -1,7 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  ActivityIndicator,
+  TouchableOpacity,
+  StyleSheet,
+  Pressable,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RootStackNavigationProp, RootStackParamList } from 'types/navigation';
 import { DebtLoanDetailItem } from 'types/DebtLoan';
 import DebtLoanService from 'utils/DebtLoanService';
@@ -16,6 +26,7 @@ export default function DebtDetailScreen() {
   const navigation = useNavigation<RootStackNavigationProp>();
   const route = useRoute<DebtDetailScreenRouteProp>();
   const { debtId } = route.params;
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     fetchDebtDetail();
@@ -51,9 +62,7 @@ export default function DebtDetailScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>
-            Error: {error || 'Debt not found'}
-          </Text>
+          <Text style={styles.errorText}>Error: {error || 'Debt not found'}</Text>
         </View>
       </SafeAreaView>
     );
@@ -61,73 +70,92 @@ export default function DebtDetailScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView}>
-        {/* Main Debt Information */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Debt Information</Text>
-          <View style={styles.detailRow}>
-            <Text style={styles.label}>Name:</Text>
-            <Text style={styles.value}>{debtDetail.name}</Text>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView style={styles.scrollView}>
+          {/* Main Debt Information */}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Debt Information</Text>
+            <View style={styles.detailRow}>
+              <Text style={styles.label}>Name:</Text>
+              <Text style={styles.value}>{debtDetail.name}</Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={styles.label}>Description:</Text>
+              <Text style={styles.value}>{debtDetail.description}</Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={styles.label}>Original Amount:</Text>
+              <Text style={styles.value}>Rp. {debtDetail.ammount.toLocaleString('id-ID')}</Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={styles.label}>Remaining Amount:</Text>
+              <Text style={[styles.value, styles.remainingAmount]}>
+                Rp. {debtDetail.remaining_ammount.toLocaleString('id-ID')}
+              </Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={styles.label}>Date:</Text>
+              <Text style={styles.value}>{format(new Date(debtDetail.date), 'MM/dd/yyyy')}</Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={styles.label}>Category:</Text>
+              <Text style={styles.value}>{debtDetail.category.name}</Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={styles.label}>Wallet:</Text>
+              <Text style={styles.value}>{debtDetail.wallet.name}</Text>
+            </View>
           </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.label}>Description:</Text>
-            <Text style={styles.value}>{debtDetail.description}</Text>
-          </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.label}>Original Amount:</Text>
-            <Text style={styles.value}>Rp. {debtDetail.ammount.toLocaleString('id-ID')}</Text>
-          </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.label}>Remaining Amount:</Text>
-            <Text style={[styles.value, styles.remainingAmount]}>
-              Rp. {debtDetail.remaining_ammount.toLocaleString('id-ID')}
-            </Text>
-          </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.label}>Date:</Text>
-            <Text style={styles.value}>{format(new Date(debtDetail.date), 'MM/dd/yyyy')}</Text>
-          </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.label}>Category:</Text>
-            <Text style={styles.value}>{debtDetail.category.name}</Text>
-          </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.label}>Wallet:</Text>
-            <Text style={styles.value}>{debtDetail.wallet.name}</Text>
-          </View>
-        </View>
 
-        {/* Payment History */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Payment History</Text>
-          {debtDetail.children.length === 0 ? (
-            <Text style={styles.noPaymentsText}>No payments made yet</Text>
-          ) : (
-            debtDetail.children.map((payment, index) => (
-              <View key={payment._id} style={styles.paymentItem}>
-                <View style={styles.paymentHeader}>
-                  <Text style={styles.paymentTitle}>{payment.description}</Text>
-                  <Text style={styles.paymentAmount}>
-                    Rp. {payment.ammount.toLocaleString('id-ID')}
+          {/* Payment History */}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Payment History</Text>
+            {debtDetail.children.length === 0 ? (
+              <Text style={styles.noPaymentsText}>No payments made yet</Text>
+            ) : (
+              debtDetail.children.map((payment, index) => (
+                <View key={payment._id} style={styles.paymentItem}>
+                  <View style={styles.paymentHeader}>
+                    <Text style={styles.paymentTitle}>{payment.description}</Text>
+                    <Text style={styles.paymentAmount}>
+                      Rp. {payment.ammount.toLocaleString('id-ID')}
+                    </Text>
+                  </View>
+                  <Text style={styles.paymentDate}>
+                    {format(new Date(payment.date), 'MMM dd, yyyy HH:mm')}
                   </Text>
                 </View>
-                <Text style={styles.paymentDate}>
-                  {format(new Date(payment.date), 'MMM dd, yyyy HH:mm')}
-                </Text>
-              </View>
-            ))
-          )}
-        </View>
+              ))
+            )}
+          </View>
+          <View style={{ height: 100 }} />
+        </ScrollView>
 
-        {/* Action Button */}
+        {/* Fixed Action Button */}
         {debtDetail.remaining_ammount > 0 && (
-          <TouchableOpacity
-            style={styles.repayButton}
-            onPress={() => navigation.navigate('Repayment', { debtItem: debtDetail })}>
-            <Text style={styles.repayButtonText}>Make Payment</Text>
-          </TouchableOpacity>
+          <View
+            style={{
+              backgroundColor: 'white',
+              paddingHorizontal: 20,
+              paddingTop: 16,
+              paddingBottom: insets.bottom + 20,
+              borderTopWidth: 1,
+              borderColor: '#E5E7EB',
+              shadowColor: '#000',
+              shadowOpacity: 0.1,
+              shadowRadius: 8,
+              elevation: 4,
+            }}>
+            <Pressable
+              style={styles.repayButton}
+              onPress={() => navigation.navigate('Repayment', { debtItem: debtDetail })}>
+              <Text style={styles.repayButtonText}>Make Payment</Text>
+            </Pressable>
+          </View>
         )}
-      </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -135,7 +163,7 @@ export default function DebtDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#F9FAFB',
   },
   scrollView: {
     flex: 1,
@@ -233,14 +261,17 @@ const styles = StyleSheet.create({
   },
   repayButton: {
     backgroundColor: '#3b667c',
-    paddingVertical: 16,
-    borderRadius: 8,
+    borderRadius: 16,
+    paddingVertical: 18,
     alignItems: 'center',
-    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   repayButtonText: {
     color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '700',
   },
 });

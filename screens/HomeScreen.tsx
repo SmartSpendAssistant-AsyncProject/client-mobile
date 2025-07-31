@@ -1,13 +1,6 @@
 import { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-  SafeAreaView,
-  StatusBar,
-} from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, StatusBar } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { RootStackNavigationProp } from '../types/navigation';
 import * as Notifications from 'expo-notifications';
@@ -124,6 +117,7 @@ export default function HomeScreen() {
   const [loan, setLoan] = useState(0);
   const [monthlyIncome, setMonthlyIncome] = useState(0);
   const [monthlyExpense, setMonthlyExpense] = useState(0);
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
 
   //   Chart data state
   const [incomeChartData, setIncomeChartData] = useState<Array<{ x: number; y: number }>>([]);
@@ -272,11 +266,32 @@ export default function HomeScreen() {
         console.error('  Error fetching wallets:', error);
       }
     };
+    const fetchNotifications = async (access_token: string) => {
+      try {
+        const response = await fetch(`${BASE_URL}/api/notifications`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${access_token}`,
+          },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const unreadCount = data.filter((notification: any) => !notification.isRead).length;
+          setUnreadNotificationCount(unreadCount);
+        } else {
+          console.error('Error fetching notifications:', response.status);
+        }
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      }
+    };
     const fetchAllData = async () => {
       const access_token = await SecureStore.getItemAsync('access_token');
       if (access_token) {
-        await fetchWallets(access_token);
-        await fetchTransactions(access_token);
+        fetchWallets(access_token);
+        fetchTransactions(access_token);
+        fetchNotifications(access_token);
       }
     };
     if (isFocused) {
@@ -349,9 +364,35 @@ export default function HomeScreen() {
             borderRadius: 20,
             justifyContent: 'center',
             alignItems: 'center',
+            position: 'relative',
           }}
           activeOpacity={0.7}>
           <Bell size={20} color="#FFFFFF" />
+          {unreadNotificationCount > 0 && (
+            <View
+              style={{
+                position: 'absolute',
+                top: -2,
+                right: -2,
+                backgroundColor: '#EF4444',
+                borderRadius: 10,
+                minWidth: 20,
+                height: 20,
+                justifyContent: 'center',
+                alignItems: 'center',
+                borderWidth: 2,
+                borderColor: '#3b667c',
+              }}>
+              <Text
+                style={{
+                  color: '#FFFFFF',
+                  fontSize: 12,
+                  fontWeight: 'bold',
+                }}>
+                {unreadNotificationCount > 99 ? '99+' : unreadNotificationCount}
+              </Text>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
 
